@@ -1,16 +1,17 @@
-// Constants and Configuration
+// Constants and Configuration (loaded from utils/env.js)
 window.APP_CONFIG = {
-    API_BASE: 'https://api.zeegoapp.com/ecommanager/api/v1',
-    AUTH_BASE: 'https://api.zeegoapp.com/users/api/v1',
-    APP_NAME: 'FlexiWallets Admin',
-    VERSION: '1.0.0'
+    API_BASE: window.ENV?.API_BASE || 'https://api.zeegoapp.com/ecommanager/api/v1',
+    AUTH_BASE: window.ENV?.AUTH_BASE || 'https://api.zeegoapp.com/users/api/v1',
+    CONTENT_API_BASE: window.ENV?.CONTENT_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
+    APP_NAME: window.ENV?.APP_NAME || 'FlexiWallets Admin',
+    VERSION: window.ENV?.APP_VERSION || '1.0.0'
 };
 
 window.STORAGE_KEYS = {
-    TOKEN: 'admin_token',
-    SESSION: 'admin_session',
-    USERNAME: 'admin_username',
-    EXPIRES: 'admin_expires'
+    TOKEN: window.ENV?.TOKEN_KEY || 'admin_token',
+    SESSION: window.ENV?.SESSION_KEY || 'admin_session',
+    USERNAME: window.ENV?.USERNAME_KEY || 'admin_username',
+    EXPIRES: window.ENV?.EXPIRES_KEY || 'admin_expires'
 };
 
 window.PRODUCT_TYPES = [
@@ -31,8 +32,7 @@ window.DISCOUNT_TYPES = [
     { value: 'fixed', label: 'Fixed Amount' }
 ];
 
-// Content Management Configuration
-window.CONTENT_API_BASE = 'https://api.zeegoapp.com/maker/api/v1';
+// Content Management Configuration (loaded from APP_CONFIG.CONTENT_API_BASE)
 
 window.CONTENT_CATEGORIES = [
     'Savings',

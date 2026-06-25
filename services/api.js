@@ -75,8 +75,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/login`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 'Content-Type': 'application/json',
             },
                 body: JSON.stringify({ username, password })
@@ -88,8 +87,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/logout`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 'Content-Type': 'application/json',
             },
                 body: JSON.stringify({ token })
@@ -100,8 +98,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/verify`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 'Content-Type': 'application/json',
             },
             });
@@ -120,7 +117,7 @@ window.api = {
                 {
                     method: 'GET',
                     headers: {
-                        'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                        'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                         'Content-Type': 'application/json'
                     }
                 }
@@ -133,7 +130,7 @@ window.api = {
                 {
                     method: 'GET',
                     headers: {
-                        'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                        'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                         'Content-Type': 'application/json'
                     }
                 }
@@ -145,7 +142,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/newshopitem`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -157,7 +154,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/edit`, {
                 method: 'PATCH',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -169,7 +166,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/delete`, {
                 method: 'DELETE',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -197,7 +194,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/newmerchant`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -209,7 +206,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/merchant/${merchantId}`, {
                 method: 'PUT',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -221,7 +218,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/merchant/${merchantId}`, {
                 method: 'DELETE',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -243,7 +240,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/newdiscount`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -255,7 +252,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/discount/${code}`, {
                 method: 'PUT',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -267,7 +264,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/discount/${code}`, {
                 method: 'DELETE',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -289,7 +286,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/newinfluencer`, {
                 method: 'POST',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -301,7 +298,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/influencer/${influencerId}`, {
                 method: 'PUT',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },
@@ -313,7 +310,7 @@ window.api = {
             return window.api.call(`${window.APP_CONFIG.API_BASE}/influencer/${influencerId}`, {
                 method: 'DELETE',
                 headers: {
-                'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu',
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
                 // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
                 'Content-Type': 'application/json',
             },

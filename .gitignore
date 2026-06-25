@@ -1,0 +1,31 @@
+# Environment Configuration
+.env
+.env.local
+.env.production
+.env.development
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Temporary files
+.tmp
+temp/
+*~
+
+# Old/backup files
+*old.js
+*old.html
