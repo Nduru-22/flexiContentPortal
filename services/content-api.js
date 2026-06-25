@@ -1,161 +1,92 @@
-/**
- * Content API Service
- * Handles all API calls for content management (videos, articles, links, tips)
- */
-
+// Content API Service - Uses main API handler with authentication
 window.contentAPI = {
-    /**
-     * Get all content with filters and pagination
-     * @param {Object} params - { audience, contentType, category, search, page, limit, featured }
-     */
+    // Get all content with filters and pagination
     getAll: async (params = {}) => {
-        try {
-            const queryParams = new URLSearchParams();
-            
-            if (params.audience) queryParams.append('target_audience', params.audience);
-            if (params.contentType) queryParams.append('content_type', params.contentType);
-            if (params.category) queryParams.append('category', params.category);
-            if (params.search) queryParams.append('search', params.search);
-            if (params.page) queryParams.append('page', params.page);
-            if (params.limit) queryParams.append('limit', params.limit);
-            if (params.featured !== undefined) queryParams.append('is_featured', params.featured);
-            
-            const url = `${API_CONFIG.CONTENT.BASE_URL}${API_CONFIG.CONTENT.ENDPOINTS.EXPLORE}?${queryParams}`;
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: API_CONFIG.HEADERS
-            });
-            
-            if (!response.ok) throw new Error('Failed to fetch content');
-            
-            const data = await response.json();
-            return data;
-            
-        } catch (error) {
-            console.error('Get all content error:', error);
-            throw error;
-        }
+        const queryParams = new URLSearchParams();
+
+        if (params.audience) queryParams.append('target_audience', params.audience);
+        if (params.contentType) queryParams.append('content_type', params.contentType);
+        if (params.category) queryParams.append('category', params.category);
+        if (params.search) queryParams.append('search', params.search);
+        if (params.page) queryParams.append('page', params.page);
+        if (params.limit) queryParams.append('limit', params.limit);
+        if (params.featured !== undefined) queryParams.append('is_featured', params.featured);
+
+        const url = `${window.APP_CONFIG.CONTENT_API_BASE}/explore?${queryParams}`;
+
+        return window.api.call(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
+                'Content-Type': 'application/json'
+            }
+        });
     },
 
-    /**
-     * Get single content by ID
-     * @param {string} contentId - Content ID
-     */
+    // Get single content by ID
     getOne: async (contentId) => {
-        try {
-            const url = `${API_CONFIG.CONTENT.BASE_URL}${API_CONFIG.CONTENT.ENDPOINTS.DETAIL}/${contentId}`;
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: API_CONFIG.HEADERS
-            });
-            
-            if (!response.ok) throw new Error('Failed to fetch content details');
-            
-            const data = await response.json();
-            return data;
-            
-        } catch (error) {
-            console.error('Get content detail error:', error);
-            throw error;
-        }
+        const url = `${window.APP_CONFIG.CONTENT_API_BASE}/detail/${contentId}`;
+
+        return window.api.call(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
+                'Content-Type': 'application/json'
+            }
+        });
     },
 
-    /**
-     * Create new content
-     * @param {Object} contentData - Content data object
-     */
+    // Create new content
     create: async (contentData) => {
-        try {
-            const url = `${API_CONFIG.CONTENT.BASE_URL}${API_CONFIG.CONTENT.ENDPOINTS.CREATE}`;
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: API_CONFIG.HEADERS,
-                body: JSON.stringify(contentData)
-            });
-            
-            if (!response.ok) throw new Error('Failed to create content');
-            
-            const data = await response.json();
-            return data;
-            
-        } catch (error) {
-            console.error('Create content error:', error);
-            throw error;
-        }
+        const url = `${window.APP_CONFIG.CONTENT_API_BASE}/create`;
+
+        return window.api.call(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(contentData)
+        });
     },
 
-    /**
-     * Update existing content
-     * @param {string} contentId - Content ID
-     * @param {Array} edits - Array of edit objects [{ variable: 'field_name', value: 'new_value' }]
-     */
+    // Update existing content
     update: async (contentId, edits) => {
-        try {
-            const url = `${API_CONFIG.CONTENT.BASE_URL}${API_CONFIG.CONTENT.ENDPOINTS.EDIT}`;
-            
-            const response = await fetch(url, {
-                method: 'PATCH',
-                headers: API_CONFIG.HEADERS,
-                body: JSON.stringify({
-                    content_id: contentId,
-                    edits: edits
-                })
-            });
-            
-            if (!response.ok) throw new Error('Failed to update content');
-            
-            const data = await response.json();
-            return data;
-            
-        } catch (error) {
-            console.error('Update content error:', error);
-            throw error;
-        }
+        const url = `${window.APP_CONFIG.CONTENT_API_BASE}/edit`;
+
+        return window.api.call(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content_id: contentId,
+                edits: edits
+            })
+        });
     },
 
-    /**
-     * Delete content
-     * @param {string} contentId - Content ID
-     */
+    // Delete content
     delete: async (contentId) => {
-        try {
-            const url = `${API_CONFIG.CONTENT.BASE_URL}${API_CONFIG.CONTENT.ENDPOINTS.DELETE}`;
-            
-            const response = await fetch(url, {
-                method: 'DELETE',
-                headers: API_CONFIG.HEADERS,
-                body: JSON.stringify({
-                    content_id: contentId
-                })
-            });
-            
-            if (!response.ok) throw new Error('Failed to delete content');
-            
-            const data = await response.json();
-            return data;
-            
-        } catch (error) {
-            console.error('Delete content error:', error);
-            throw error;
-        }
+        const url = `${window.APP_CONFIG.CONTENT_API_BASE}/delete`;
+
+        return window.api.call(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content_id: contentId
+            })
+        });
     },
 
-    /**
-     * Toggle featured status
-     * @param {string} contentId - Content ID
-     * @param {boolean} isFeatured - New featured status
-     */
+    // Toggle featured status
     toggleFeatured: async (contentId, isFeatured) => {
-        try {
-            return await contentAPI.update(contentId, [
-                { variable: 'is_featured', value: isFeatured }
-            ]);
-        } catch (error) {
-            console.error('Toggle featured error:', error);
-            throw error;
-        }
+        return window.contentAPI.update(contentId, [
+            { variable: 'is_featured', value: isFeatured }
+        ]);
     }
 };
