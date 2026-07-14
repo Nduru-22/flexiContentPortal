@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Product Details | Flexiwallets</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#499d8f",
+                        "inverse-on-surface": "#f2f0ed",
+                        "error-container": "#ffdad6",
+                        "error": "#BA1A1A",
+                        "tertiary-container": "#002e28",
+                        "inverse-surface": "#30312e",
+                        "secondary": "#a14000",
+                        "outline": "#72787a",
+                        "on-surface-variant": "#41484a",
+                        "on-secondary-fixed": "#351000",
+                        "on-background": "#1b1c1a",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-primary": "#ffffff",
+                        "text-secondary": "#3E4946",
+                        "surface-container": "#F2EFE9",
+                        "surface": "#FFFFFF",
+                        "surface-container-highest": "#e4e2de",
+                        "surface-dim": "#dbdad6",
+                        "primary-fixed-dim": "#adccd5",
+                        "success": "#00C851",
+                        "surface-bright": "#fbf9f5",
+                        "primary-container": "#0d2c33",
+                        "on-primary-fixed-variant": "#2e4b52",
+                        "primary": "#00171c",
+                        "inverse-primary": "#adccd5",
+                        "accent-light": "#FF9A5C",
+                        "on-secondary-fixed-variant": "#7b2f00",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#83d5c6",
+                        "outline-variant": "#c1c7ca",
+                        "tertiary-fixed": "#9ff2e2",
+                        "tertiary": "#001713",
+                        "on-primary-container": "#77949c",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e4e2de",
+                        "surface-container-low": "#f5f3ef",
+                        "text-hint": "#6E7976",
+                        "primary-fixed": "#c9e8f1",
+                        "surface-container-high": "#eae8e4",
+                        "surface-tint": "#46636b",
+                        "on-surface": "#1b1c1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "secondary-container": "#ff7a32",
+                        "divider": "#BEC9C5",
+                        "background": "#fbf9f5",
+                        "on-secondary-container": "#622400",
+                        "on-primary-fixed": "#001f26",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    borderRadius: {
+                        "card": "20px"
+                    },
+                    spacing: {
+                        "gutter": "16px",
+                        "section-padding": "20px",
+                        "card-padding": "16px",
+                        "stack-lg": "24px"
+                    },
+                    fontFamily: {
+                        "h4": ["Plus Jakarta Sans"],
+                        "body-lg": ["Manrope"],
+                        "display": ["Plus Jakarta Sans"],
+                        "h3": ["Plus Jakarta Sans"],
+                        "h2": ["Plus Jakarta Sans"],
+                        "h1": ["Plus Jakarta Sans"],
+                        "button": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "label-lg": ["Manrope"],
+                        "overline": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "caption": ["Manrope"]
+                    },
+                    fontSize: {
+                        "h4": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "display": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "h3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "h2": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "h1": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "button": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+                        "label-md": ["14px", { lineHeight: "18px", fontWeight: "600" }],
+                        "label-lg": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "overline": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "caption": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .custom-shadow {
+            box-shadow: 0 4px 20px 0 rgba(13, 44, 51, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-body-md pb-32" id="app">
+    <div class="text-center py-20">
+        <div class="spinner mx-auto w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-gray-600 mt-4">Loading product details...</p>
+    </div>
+
+    <script>
+        // Get product ID from URL params
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get('id');
+        const getterBase = 'https://api.zeegoapp.com/getter/api/v1';
+
+        if (!productId) {
+            document.getElementById('app').innerHTML = '<div class="text-center py-20"><p class="text-red-600 text-lg">Product ID not provided</p></div>';
+        } else {
+            fetch(`${getterBase}/product?product_id=${productId}`, {
+                headers: { 'Authorization': 'Basic YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== '4000' || !data.detail) {
+                    throw new Error('Product not found');
+                }
+                renderProduct(data.detail);
+            })
+            .catch(err => {
+                document.getElementById('app').innerHTML = `<div class="text-center py-20"><p class="text-red-600 text-lg">Error: ${err.message}</p></div>`;
+            });
+        }
+
+        function renderProduct(product) {
+            const details = product.details || {};
+            const isInsurance = product.vertical === 'insurance';
+            const heroImage = product.media && product.media.length > 0 ? product.media[0].image_url : null;
+
+            let html = `
+            <!-- Header Section -->
+            <header class="bg-primary-container text-on-primary w-full top-0 sticky z-50 shadow-sm transition-all duration-300">
+                <div class="flex items-center justify-between px-gutter h-16 w-full max-w-[1140px] mx-auto relative z-10">
+                    <div class="flex items-center gap-4">
+                        <button aria-label="Go back" class="p-2 hover:opacity-80 transition-opacity active:scale-95" onclick="window.history.back()">
+                            <span class="material-symbols-outlined text-on-primary">arrow_back</span>
+                        </button>
+                        <div class="flex flex-col">
+                            <h1 class="font-h3 text-h3 text-on-primary leading-tight">${product.title}</h1>
+                            <p class="font-overline text-overline text-on-primary-container uppercase tracking-wider">by ${product.partner_id || 'Partner'}</p>
+                        </div>
+                    </div>
+                    <button aria-label="Notifications" class="p-2 hover:opacity-80 transition-opacity active:scale-95">
+                        <span class="material-symbols-outlined text-on-primary">notifications</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="max-w-[1140px] mx-auto px-4 md:px-gutter mt-8 space-y-stack-lg">
+            `;
+
+            // Hero image section
+            if (heroImage) {
+                html += `
+                <section class="bg-surface rounded-card overflow-hidden custom-shadow border border-divider/10">
+                    <img src="${heroImage}" alt="${product.title}" class="w-full h-64 object-cover" />
+                </section>
+                `;
+            }
+
+            // Main metrics
+            if (isInsurance) {
+                html += `
+                <section class="bg-surface rounded-card p-8 custom-shadow border border-divider/10">
+                    <div class="space-y-6">
+                        <div class="space-y-1">
+                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">COVER AMOUNT</p>
+                            <p class="font-display text-display text-primary">KES ${(details.cover_amount || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-divider/20">
+                            <div class="space-y-1">
+                                <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">INDICATIVE PREMIUM</p>
+                                <p class="font-amount-sm text-amount-sm text-secondary">KES ${(details.indicative_premium || 0).toLocaleString()} <span class="text-label-md font-label-md text-text-hint font-normal">/ ${details.premium_frequency || 'month'}</span></p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="bg-success/10 text-success p-2 rounded-full">
+                                    <span class="material-symbols-outlined text-[20px]">verified</span>
+                                </div>
+                                <span class="font-body-md text-body-md text-on-surface">Coverage Details</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Category</p>
+                        <p class="font-h4 text-h4 text-primary">${details.category || 'N/A'}</p>
+                    </div>
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Premium</p>
+                        <p class="font-h4 text-h4 text-primary">KES ${(details.indicative_premium || 0).toLocaleString()}</p>
+                    </div>
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Frequency</p>
+                        <p class="font-h4 text-h4 text-primary">${(details.premium_frequency || 'monthly').charAt(0).toUpperCase() + (details.premium_frequency || 'monthly').slice(1)}</p>
+                    </div>
+                </section>
+                `;
+            } else {
+                html += `
+                <section class="bg-surface rounded-card p-8 custom-shadow border border-divider/10">
+                    <div class="space-y-6">
+                        <div class="space-y-1">
+                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">INDICATIVE RETURN</p>
+                            <p class="font-display text-display text-primary">${(details.indicative_return_rate || 0).toFixed(2)}%</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-divider/20">
+                            <div>
+                                <p class="font-label-md text-label-md text-text-hint mb-2">1-Year Return</p>
+                                <p class="font-h3 text-h3 text-secondary">${(details.return_1y || 0).toFixed(2)}%</p>
+                                <p class="font-caption text-caption text-text-hint">as of ${details.performance_as_of ? new Date(details.performance_as_of).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p class="font-label-md text-label-md text-text-hint mb-2">3-Year Return</p>
+                                <p class="font-h3 text-h3 text-secondary">${(details.return_3y || 0).toFixed(2)}%</p>
+                            </div>
+                            <div>
+                                <p class="font-label-md text-label-md text-text-hint mb-2">Min. Investment</p>
+                                <p class="font-h3 text-h3 text-secondary">KES ${(details.minimum_investment || 0).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Fund Type</p>
+                        <p class="font-h4 text-h4 text-primary">${details.fund_type || 'N/A'}</p>
+                    </div>
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Management Fee</p>
+                        <p class="font-h4 text-h4 text-primary">${(details.management_fee || 0).toFixed(2)}%</p>
+                    </div>
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Risk Level</p>
+                        <p class="font-h4 text-h4 text-primary">${(details.risk_level || 'N/A').charAt(0).toUpperCase() + (details.risk_level || 'N/A').slice(1)}</p>
+                    </div>
+                </section>
+                `;
+            }
+
+            // Key features section
+            if (details.key_features && Array.isArray(details.key_features) && details.key_features.length > 0) {
+                html += `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg">
+                    <section class="lg:col-span-8 bg-surface rounded-card p-8 custom-shadow border border-divider/10">
+                        <h3 class="font-h2 text-h2 text-primary mb-6">${isInsurance ? "What's Covered" : 'Fund Facts'}</h3>
+                        <ul class="space-y-6">
+                `;
+
+                details.key_features.forEach(feature => {
+                    let title, description;
+                    if (typeof feature === 'object' && feature !== null) {
+                        title = feature.title || '';
+                        description = feature.description || '';
+                    } else {
+                        title = feature;
+                        description = '';
+                    }
+
+                    html += `
+                        <li class="flex items-start gap-4">
+                            <div class="mt-1 bg-success/10 text-success rounded-full p-1 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[18px]">check</span>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="font-h4 text-h4 text-on-surface">${title}</p>
+                                ${description ? `<p class="font-body-sm text-body-sm text-text-hint">${description}</p>` : ''}
+                            </div>
+                        </li>
+                    `;
+                });
+
+                html += `
+                        </ul>
+                    </section>
+                `;
+
+                // Documents section
+                if (product.documents && product.documents.length > 0) {
+                    html += `
+                    <div class="lg:col-span-4 space-y-stack-lg">
+                        <section class="bg-surface rounded-card p-6 custom-shadow border border-divider/10">
+                            <h4 class="font-h4 text-h4 text-primary mb-4">Resources</h4>
+                            <div class="space-y-2">
+                    `;
+
+                    product.documents.forEach(doc => {
+                        html += `
+                        <div class="flex items-center justify-between p-4 bg-surface-container rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-primary/10 text-primary p-2 rounded-lg">
+                                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                                </div>
+                                <div>
+                                    <p class="font-label-lg text-label-lg text-on-surface">${doc.label}</p>
+                                    <p class="font-caption text-caption text-text-hint">${doc.type || 'Document'}</p>
+                                </div>
+                            </div>
+                            <a href="${doc.file_url}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:bg-secondary/5 p-2 rounded-full transition-colors">
+                                <span class="material-symbols-outlined">download</span>
+                            </a>
+                        </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </section>
+                    </div>
+                    </div>
+                    `;
+                } else {
+                    html += `</div>`;
+                }
+            }
+
+            html += `
+            </main>
+
+            <!-- Fixed Footer Action -->
+            <div class="fixed bottom-0 left-0 w-full bg-surface border-t border-divider/20 px-6 py-4 z-50">
+                <div class="max-w-[1140px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="hidden sm:block">
+                        <p class="font-overline text-overline text-text-hint uppercase tracking-widest">${isInsurance ? 'ESTIMATED PREMIUM' : 'MINIMUM INVESTMENT'}</p>
+                        <p class="font-h3 text-h3 text-primary">
+                            KES ${isInsurance ? (details.indicative_premium || 0).toLocaleString() : (details.minimum_investment || 0).toLocaleString()}
+                            ${isInsurance ? `<span class="font-body-sm text-body-sm text-text-hint font-normal">/ ${details.premium_frequency || 'mo'}</span>` : ''}
+                        </p>
+                    </div>
+                    <button class="w-full sm:w-auto px-12 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-secondary/20">
+                        ${isInsurance ? 'Apply Now' : 'Invest Now'}
+                    </button>
+                </div>
+            </div>
+            `;
+
+            document.getElementById('app').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

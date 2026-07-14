@@ -34,7 +34,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     });
 
     const [keyFeatures, setKeyFeatures] = useState(
-        existingDetails.key_features && existingDetails.key_features.length ? existingDetails.key_features : ['']
+        existingDetails.key_features && existingDetails.key_features.length ? existingDetails.key_features : [{ title: '', description: '' }]
     );
 
     const [mediaList, setMediaList] = useState(product?.media || []);
@@ -49,14 +49,16 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const updateFeature = (index, value) => {
-        setKeyFeatures(prev => prev.map((f, i) => (i === index ? value : f)));
+    const updateFeature = (index, field, value) => {
+        setKeyFeatures(prev => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
     };
-    const addFeature = () => setKeyFeatures(prev => [...prev, '']);
+    const addFeature = () => setKeyFeatures(prev => [...prev, { title: '', description: '' }]);
     const removeFeature = (index) => setKeyFeatures(prev => prev.filter((_, i) => i !== index));
 
     const buildDetails = () => {
-        const features = keyFeatures.map(f => f.trim()).filter(Boolean);
+        const features = keyFeatures
+            .filter(f => f.title.trim() || f.description.trim())
+            .map(f => ({ title: f.title.trim(), description: f.description.trim() }));
         if (formData.vertical === 'insurance') {
             return {
                 category: formData.category,
@@ -373,22 +375,31 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                 {formData.vertical === 'insurance' ? "What's covered" : 'Fund facts'}
                             </h4>
                             <button type="button" onClick={addFeature} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                                + Add bullet
+                                + Add feature
                             </button>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             {keyFeatures.map((feature, idx) => (
-                                <div key={idx} className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={feature}
-                                        onChange={(e) => updateFeature(idx, e.target.value)}
+                                <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            value={feature.title}
+                                            onChange={(e) => updateFeature(idx, 'title', e.target.value)}
+                                            className={inputCls}
+                                            placeholder="Title (e.g., Inpatient cover up to full limit)"
+                                        />
+                                        <button type="button" onClick={() => removeFeature(idx)} className="px-3 text-gray-400 hover:text-red-500 flex-shrink-0">
+                                            <window.Icons.X />
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        value={feature.description}
+                                        onChange={(e) => updateFeature(idx, 'description', e.target.value)}
                                         className={inputCls}
-                                        placeholder="e.g., Inpatient cover up to the full policy limit"
+                                        rows={2}
+                                        placeholder="Description (e.g., Full access to medical facilities within the Kilele Preferred Provider Network nationwide.)"
                                     />
-                                    <button type="button" onClick={() => removeFeature(idx)} className="px-3 text-gray-400 hover:text-red-500">
-                                        <window.Icons.X />
-                                    </button>
                                 </div>
                             ))}
                         </div>
