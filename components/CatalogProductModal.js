@@ -14,6 +14,10 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         description: product?.description || '',
         active: product?.active ?? true,
 
+        // payment details
+        payment_method: product?.payment_details?.method || 'paybill',
+        payment_identifier: product?.payment_details?.identifier || '',
+
         // insurance details
         category: existingDetails.category || 'health',
         cover_amount: existingDetails.cover_amount ?? '',
@@ -89,6 +93,10 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         setSaving(true);
 
         const details = buildDetails();
+        const payment_details = formData.payment_identifier
+            ? { method: formData.payment_method, identifier: formData.payment_identifier }
+            : null;
+
         let result;
         if (isEdit) {
             result = await window.catalogAPI.products.update(product.id, {
@@ -96,6 +104,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 title: formData.title,
                 description: formData.description,
                 active: formData.active,
+                payment_details,
                 details
             });
         } else {
@@ -105,6 +114,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 title: formData.title,
                 description: formData.description,
                 active: formData.active,
+                payment_details,
                 details
             });
         }
@@ -227,6 +237,49 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                 rows={3}
                                 className={inputCls}
                             />
+                        </div>
+
+                        {/* Payment Details */}
+                        <div className="md:col-span-2 border-l-4 border-amber-400 bg-amber-50 rounded-lg p-4">
+                            <h4 className="font-semibold text-gray-800 mb-3">Payment Details</h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="flex items-center gap-3 cursor-pointer mb-2">
+                                        <input
+                                            type="radio"
+                                            name="payment_method"
+                                            value="paybill"
+                                            checked={formData.payment_method === 'paybill'}
+                                            onChange={(e) => handleChange('payment_method', e.target.value)}
+                                            className="w-4 h-4 text-amber-600"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Paybill</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="payment_method"
+                                            value="till"
+                                            checked={formData.payment_method === 'till'}
+                                            onChange={(e) => handleChange('payment_method', e.target.value)}
+                                            className="w-4 h-4 text-amber-600"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Till Number</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className={labelCls}>
+                                        {formData.payment_method === 'paybill' ? 'Paybill Number' : 'Till Number'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.payment_identifier}
+                                        onChange={(e) => handleChange('payment_identifier', e.target.value)}
+                                        className={inputCls}
+                                        placeholder={formData.payment_method === 'paybill' ? 'e.g., 123456' : 'e.g., 654321'}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {isEdit && (
