@@ -1,21 +1,38 @@
 // Marketing Banner Modal Component (catalog top-of-screen carousel)
-const { useState } = React;
+const { useState, useEffect } = React;
 
 window.CatalogBannerModal = function CatalogBannerModal({ banner, onClose, onSave }) {
+    const existingLinkTarget = banner?.link_target || '';
+    const looksLikeProductId = existingLinkTarget && /^\d+$/.test(existingLinkTarget);
+
     const [formData, setFormData] = useState({
         vertical: banner?.vertical || 'global',
         headline: banner?.headline || '',
         subtext: banner?.subtext || '',
         image_url: banner?.image_url || '',
-        link_target: banner?.link_target || '',
+        link_type: looksLikeProductId ? 'product' : (existingLinkTarget ? 'external' : 'product'),
+        product_id: looksLikeProductId ? existingLinkTarget : '',
+        external_link: looksLikeProductId ? '' : existingLinkTarget,
         display_order: banner?.display_order ?? 0,
         active: banner?.active ?? true,
         active_from: banner?.active_from ? banner.active_from.slice(0, 16) : '',
         active_to: banner?.active_to ? banner.active_to.slice(0, 16) : ''
     });
 
+    const [products, setProducts] = useState([]);
+    const [productsLoading, setProductsLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        (async () => {
+            const result = await window.catalogAPI.products.getAll({ active: true });
+            if (result.status === '4000') {
+                setProducts(result.detail || []);
+            }
+            setProductsLoading(false);
+        })();
+    }, []);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -26,12 +43,16 @@ window.CatalogBannerModal = function CatalogBannerModal({ banner, onClose, onSav
         setError('');
         setSaving(true);
 
+        const link_target = formData.link_type === 'product'
+            ? (formData.product_id || null)
+            : (formData.external_link || null);
+
         const payload = {
             vertical: formData.vertical,
             headline: formData.headline,
             subtext: formData.subtext || null,
             image_url: formData.image_url || null,
-            link_target: formData.link_target || null,
+            link_target,
             display_order: parseInt(formData.display_order) || 0,
             active: formData.active,
             active_from: formData.active_from || null,
@@ -125,14 +146,55 @@ window.CatalogBannerModal = function CatalogBannerModal({ banner, onClose, onSav
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className={labelCls}>Link target</label>
-                            <input
-                                type="text"
-                                value={formData.link_target}
-                                onChange={(e) => handleChange('link_target', e.target.value)}
-                                className={inputCls}
-                                placeholder="Product ID (e.g. 42) or an external URL"
-                            />
+                            <label className={labelCls}>Link type</label>
+                            <div className="flex gap-6 mb-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="link_type"
+                                        checked={formData.link_type === 'product'}
+                                        onChange={() => handleChange('link_type', 'product')}
+                                        className="w-4 h-4 text-rose-600 focus:ring-2 focus:ring-rose-500"
+                                    />
+                                    <span className="text-sm text-gray-700">Product</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="link_type"
+                                        checked={formData.link_type === 'external'}
+                                        onChange={() => handleChange('link_type', 'external')}
+                                        className="w-4 h-4 text-rose-600 focus:ring-2 focus:ring-rose-500"
+                                    />
+                                    <span className="text-sm text-gray-700">External link</span>
+                                </label>
+                            </div>
+
+                            {formData.link_type === 'product' ? (
+                                <select
+                                    value={formData.product_id}
+                                    onChange={(e) => handleChange('product_id', e.target.value)}
+                                    className={inputCls}
+                                    disabled={productsLoading}
+                                >
+                                    <option value="">
+                                        {productsLoading ? 'Loading products...' : 'Select a product'}
+                                    </option>
+                                    {products.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.title} ({p.vertical})
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="url"
+                                    value={formData.external_link}
+                                    onChange={(e) => handleChange('external_link', e.target.value)}
+                                    className={inputCls}
+                                    placeholder="https://example.com/promo"
+                                />
+                            )}
                         </div>
 
                         <div>
