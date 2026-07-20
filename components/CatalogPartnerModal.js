@@ -6,6 +6,7 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
         name: partner?.name || '',
         type: partner?.type || 'insurer',
         country: partner?.country || 'Kenya',
+        phone: partner?.phone || '',
         contact_emails: (partner?.contact_emails || []).join(', '),
         logo_url: partner?.logo_url || '',
         active: partner?.active ?? true
@@ -27,6 +28,7 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
             name: formData.name,
             type: formData.type,
             country: formData.country,
+            phone: formData.phone || null,
             contact_emails: formData.contact_emails
                 .split(',')
                 .map(s => s.trim())
@@ -98,6 +100,17 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
                                 value={formData.country}
                                 onChange={(e) => handleChange('country', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input
+                                type="text"
+                                value={formData.phone}
+                                onChange={(e) => handleChange('phone', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                placeholder="e.g., 0712345678"
                             />
                         </div>
 
