@@ -42,7 +42,15 @@ window.deeplinksAPI = {
         });
     },
 
-    // The resolvable link an app-based QR scanner hits.
+    // The link that actually goes on the QR code / gets handed to the admin.
+    // flexiwallets.com/deeplink/<slug> resolves the template itself (zero-tap
+    // open for installed-app users, "Get the App" landing otherwise).
+    publicUrl(templateId) {
+        return `${window.APP_CONFIG.PUBLIC_DEEPLINK_BASE}/${templateId}`;
+    },
+
+    // Internal only — what that page's own code calls to resolve the
+    // template. Never shown to the admin; kept here for debugging.
     resolveUrl(templateType, templateId) {
         return `${window.APP_CONFIG.AUTH_BASE}/deeplink-template/${templateType}/${templateId}`;
     },

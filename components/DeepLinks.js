@@ -51,7 +51,7 @@ function DeepLinks() {
     };
 
     const handleCopy = (link) => {
-        const url = window.deeplinksAPI.resolveUrl(link.template_type, link.template_id);
+        const url = window.deeplinksAPI.publicUrl(link.template_id);
         navigator.clipboard.writeText(url).then(() => {
             setCopiedId(link.template_id);
             setTimeout(() => setCopiedId(''), 2000);
@@ -152,7 +152,12 @@ function DeepLinks() {
                                                 {info?.icon} {info?.label || link.template_type}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 font-mono text-xs text-gray-700">{link.template_id}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="font-mono text-xs text-gray-700">{link.template_id}</div>
+                                            <div className="font-mono text-xs text-indigo-600 mt-0.5">
+                                                {window.deeplinksAPI.publicUrl(link.template_id)}
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-3 text-gray-800">{getTargetLabel(link)}</td>
                                         <td className="px-4 py-3 text-gray-600">{link.scan_count || 0}</td>
                                         <td className="px-4 py-3 text-gray-500 text-xs">
@@ -163,7 +168,7 @@ function DeepLinks() {
                                                 <button
                                                     onClick={() => handleCopy(link)}
                                                     className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition-colors"
-                                                    title="Copy resolvable link"
+                                                    title="Copy flexiwallets.com deep link"
                                                 >
                                                     {copiedId === link.template_id ? '✅ Copied' : '📋 Copy'}
                                                 </button>

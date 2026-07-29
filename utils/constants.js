@@ -5,6 +5,7 @@ window.APP_CONFIG = {
     CONTENT_API_BASE: window.ENV?.CONTENT_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
     GETTER_API_BASE: window.ENV?.GETTER_API_BASE || 'https://api.zeegoapp.com/getter/api/v1',
     MAKER_API_BASE: window.ENV?.MAKER_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
+    PUBLIC_DEEPLINK_BASE: window.ENV?.PUBLIC_DEEPLINK_BASE || 'https://flexiwallets.com/deeplink',
     APP_NAME: window.ENV?.APP_NAME || 'FlexiWallets Admin',
     VERSION: window.ENV?.APP_VERSION || '1.0.0'
 };

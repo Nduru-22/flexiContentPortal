@@ -11,6 +11,11 @@ window.ENV = {
     GETTER_API_BASE: window.ENV?.GETTER_API_BASE || 'https://api.zeegoapp.com/getter/api/v1',
     MAKER_API_BASE: window.ENV?.MAKER_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
 
+    // Public-facing deep link base — this is what goes on QR codes / gets
+    // copied out of the portal. The api.zeegoapp.com resolve URL is internal
+    // only (used by that page's own code), never shown to the admin.
+    PUBLIC_DEEPLINK_BASE: window.ENV?.PUBLIC_DEEPLINK_BASE || 'https://flexiwallets.com/deeplink',
+
     // Authentication (Base64 encoded)
     BASIC_AUTH: window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu', // admin:simpleinsightadmin
 
