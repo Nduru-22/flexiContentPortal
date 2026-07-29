@@ -88,6 +88,16 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
         }
     };
 
+    const handleNavRouteChange = (value) => {
+        setNavRoute(value);
+        if (isEditing) return;
+        const preset = window.NAV_ROUTES.find(r => r.value === value);
+        if (preset?.templateId) {
+            setTemplateId(preset.templateId);
+            setNavLabel(preset.label.replace(/^Book /, ''));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -250,7 +260,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                                 </label>
                                 <select
                                     value={navRoute}
-                                    onChange={(e) => setNavRoute(e.target.value)}
+                                    onChange={(e) => handleNavRouteChange(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 >
                                     {window.NAV_ROUTES.map(r => (

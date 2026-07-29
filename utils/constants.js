@@ -84,6 +84,12 @@ window.DEEPLINK_TYPES = [
 
 // Preset app routes for the 'nav' deep link type (QR codes navigating to a page,
 // e.g. from the physical book). "Custom Route" lets an admin type any other path.
+//
+// Entries with a 'templateId' auto-fill the Template ID field when picked —
+// used for the flexiwallets.com/deeplink/<slug> book-module fallback pages,
+// where the route the web team wants stored is literally "/deeplink/<slug>"
+// (the same path the QR code prints) and template_id must match that slug
+// exactly for their resolver to find it.
 window.NAV_ROUTES = [
     { value: '/dashboard', label: 'Home / Dashboard' },
     { value: '/budgets', label: 'Budgets' },
@@ -95,6 +101,15 @@ window.NAV_ROUTES = [
     { value: '/challenges', label: 'Challenges' },
     { value: '/investments', label: 'Investments' },
     { value: '/insurance', label: 'Insurance' },
+    { value: '/deeplink/module-1-wallet-creation', label: 'Book Module 1 – Wallet Creation', templateId: 'module-1-wallet-creation' },
+    { value: '/deeplink/module-2-scheduled-payment', label: 'Book Module 2 – Scheduled Payment', templateId: 'module-2-scheduled-payment' },
+    { value: '/deeplink/module-3-budget-creation', label: 'Book Module 3 – Budget Creation', templateId: 'module-3-budget-creation' },
+    { value: '/deeplink/module-4-money-automation', label: 'Book Module 4 – Money Automation', templateId: 'module-4-money-automation' },
+    { value: '/deeplink/module-6-wallet-lock', label: 'Book Module 6 – Wallet Lock', templateId: 'module-6-wallet-lock' },
+    { value: '/deeplink/module-7-shared-visibility', label: 'Book Module 7 – Shared Visibility', templateId: 'module-7-shared-visibility' },
+    { value: '/deeplink/module-8-juno-account', label: 'Book Module 8 – Juno Account', templateId: 'module-8-juno-account' },
+    { value: '/deeplink/module-9-joint-goals', label: 'Book Module 9 – Joint Goals', templateId: 'module-9-joint-goals' },
+    { value: '/deeplink/module-11-insurance-investments', label: 'Book Module 11 – Insurance & Investments', templateId: 'module-11-insurance-investments' },
     { value: '__custom__', label: 'Custom Route…' }
 ];
 
