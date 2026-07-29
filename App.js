@@ -63,6 +63,8 @@ function App() {
             setCurrentView('dashboard');
         } else if (section === 'content') {
             setCurrentView('content');
+        } else if (section === 'deeplinks') {
+            setCurrentView('deeplinks');
         }
     };
 
@@ -88,9 +90,25 @@ function App() {
         { id: 'content', label: '📚 All Content', component: Content }
     ];
 
-    const currentNavItems = currentSection === 'shop' ? shopNavItems : contentNavItems;
-    const ActiveComponent = currentNavItems.find(item => item.id === currentView)?.component || 
-                           (currentSection === 'shop' ? Dashboard : Content);
+    // Define deep links navigation items
+    const deeplinksNavItems = [
+        { id: 'deeplinks', label: '🔗 Deep Links', component: DeepLinks }
+    ];
+
+    const sectionNavItems = {
+        shop: shopNavItems,
+        content: contentNavItems,
+        deeplinks: deeplinksNavItems
+    };
+    const sectionDefaultComponent = {
+        shop: Dashboard,
+        content: Content,
+        deeplinks: DeepLinks
+    };
+
+    const currentNavItems = sectionNavItems[currentSection];
+    const ActiveComponent = currentNavItems.find(item => item.id === currentView)?.component ||
+                           sectionDefaultComponent[currentSection];
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -126,9 +144,19 @@ function App() {
                                 >
                                     📚 Content
                                 </button>
+                                <button
+                                    onClick={() => handleSectionChange('deeplinks')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'deeplinks'
+                                            ? 'bg-white text-indigo-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    🔗 Deep Links
+                                </button>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center space-x-4">
                             <span className="text-sm text-gray-600">
                                 👤 {user.username}

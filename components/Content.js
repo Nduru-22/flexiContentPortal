@@ -29,7 +29,7 @@ function Content() {
             });
             
             if (response.status === '4000') {
-                setContent(response.detail || []);
+                setContent(response.data?.content || []);
             } else {
                 console.error('Failed to fetch content:', response.message);
             }
