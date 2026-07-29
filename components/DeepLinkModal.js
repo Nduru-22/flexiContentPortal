@@ -142,8 +142,10 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                 template_id: templateId.trim(),
                 template_type: templateType,
                 template_data: templateData,
-                is_active: isActive,
-                created_by: localStorage.getItem(window.STORAGE_KEYS.USERNAME)
+                is_active: isActive
+                // created_by is a BigInteger column on the backend — this portal
+                // only has a username, not a numeric admin id, so it's left unset
+                // rather than sending a string that fails the DB insert.
             });
             resetForm();
             onClose();

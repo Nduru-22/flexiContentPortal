@@ -38,8 +38,7 @@ window.deeplinksAPI = {
             template_id: template.template_id,
             template_type: template.template_type,
             template_data: template.template_data,
-            is_active: false,
-            created_by: localStorage.getItem(window.STORAGE_KEYS.USERNAME)
+            is_active: false
         });
     },
 
