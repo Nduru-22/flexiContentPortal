@@ -72,7 +72,7 @@ window.api = {
     // Authentication APIs
     auth: {
         async login(username, password) {
-            return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/login`, {
+            return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/adminlogin`, {
                 method: 'POST',
                 headers: {
                 'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,

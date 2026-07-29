@@ -65,6 +65,8 @@ function App() {
             setCurrentView('content');
         } else if (section === 'deeplinks') {
             setCurrentView('deeplinks');
+        } else if (section === 'plans') {
+            setCurrentView('catalog-partners');
         }
     };
 
@@ -95,15 +97,24 @@ function App() {
         { id: 'deeplinks', label: '🔗 Deep Links', component: DeepLinks }
     ];
 
+    // Define insurance & investments ("Plans") navigation items
+    const plansNavItems = [
+        { id: 'catalog-partners', label: '🤝 Partners', component: window.CatalogPartners },
+        { id: 'catalog-products', label: '📦 Catalog', component: window.CatalogProducts },
+        { id: 'catalog-banners', label: '🎠 Banners', component: window.CatalogBanners }
+    ];
+
     const sectionNavItems = {
         shop: shopNavItems,
         content: contentNavItems,
-        deeplinks: deeplinksNavItems
+        deeplinks: deeplinksNavItems,
+        plans: plansNavItems
     };
     const sectionDefaultComponent = {
         shop: Dashboard,
         content: Content,
-        deeplinks: DeepLinks
+        deeplinks: DeepLinks,
+        plans: window.CatalogPartners
     };
 
     const currentNavItems = sectionNavItems[currentSection];
@@ -154,6 +165,16 @@ function App() {
                                 >
                                     🔗 Deep Links
                                 </button>
+                                <button
+                                    onClick={() => handleSectionChange('plans')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'plans'
+                                            ? 'bg-white text-teal-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    🛡️ Plans
+                                </button>
                             </div>
                         </div>
 
@@ -170,10 +191,10 @@ function App() {
                         </div>
                     </div>
 
-                    {/* Tabs Navigation - Only show for shop section */}
-                    {currentSection === 'shop' && (
+                    {/* Tabs Navigation - shop and plans sections have sub-tabs */}
+                    {(currentSection === 'shop' || currentSection === 'plans') && (
                         <nav className="flex space-x-1 -mb-px overflow-x-auto">
-                            {shopNavItems.map((item) => (
+                            {currentNavItems.map((item) => (
                                 <button
                                     key={item.id}
                                     onClick={() => handleNavigate(item.id)}
