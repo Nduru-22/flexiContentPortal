@@ -13,7 +13,8 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
         inventory_count: product?.inventory_count || 0,
         image_link: product?.image_link?.[0] || '',
         is_featured: product?.is_featured || false,
-        status: product?.status || 'active'
+        status: product?.status || 'active',
+        juno_eligible: product?.juno_eligible ?? true
     });
 
     const [saving, setSaving] = useState(false);
@@ -206,6 +207,23 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
                                 />
                                 <span className="text-sm font-medium text-gray-700">Featured Product</span>
                             </label>
+                        </div>
+
+                        {/* Juno Eligible Checkbox */}
+                        <div className="md:col-span-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.juno_eligible}
+                                    onChange={(e) => handleChange('juno_eligible', e.target.checked)}
+                                    className="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Juno Eligible</span>
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1 ml-6">
+                                Uncheck to hide this product from Juno (minor) accounts — it won't
+                                show up in their shop or be purchasable, even by direct link.
+                            </p>
                         </div>
 
                         {/* Status */}
