@@ -101,7 +101,8 @@ window.TARGET_AUDIENCES = [
 // the rest follow the same '<entity>_id' convention since no app consumer
 // example exists for them yet.
 window.DEEPLINK_TYPES = [
-    { value: 'content', label: 'Content Item', icon: '📚', picker: 'content', optionIdField: 'content_id', optionNameField: 'title', dataKey: 'content_id' },
+    { value: 'content', label: 'Learn Content (Free)', icon: '📚', picker: 'content', optionIdField: 'content_id', optionNameField: 'title', dataKey: 'content_id' },
+    { value: 'premium_content', label: 'Premium Content (Paid)', icon: '🔒', picker: 'premium_content', optionIdField: 'content_id', optionNameField: 'title', dataKey: 'content_id' },
     { value: 'shop', label: 'Shop Product', icon: '🛍️', picker: 'shop', optionIdField: 'pid', optionNameField: 'product_name', dataKey: 'product_id' },
     { value: 'challenge', label: 'Challenge', icon: '🏆', picker: 'challenges', optionIdField: 'id', optionNameField: 'name', dataKey: 'challenge_id' },
     { value: 'investment', label: 'Investment Product', icon: '📈', picker: 'investment', optionIdField: 'id', optionNameField: 'title', dataKey: 'product_id' },
