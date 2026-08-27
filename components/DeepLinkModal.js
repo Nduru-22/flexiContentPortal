@@ -149,7 +149,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                 // only has a username, not a numeric admin id, so it's left unset
                 // rather than sending a string that fails the DB insert.
             });
-            const publicUrl = window.deeplinksAPI.publicUrl(finalTemplateId);
+            const publicUrl = window.deeplinksAPI.publicUrl(finalTemplateId, templateType);
             resetForm();
             onClose();
             alert(`Deep link saved!\n\nPut this on the QR code:\n${publicUrl}`);

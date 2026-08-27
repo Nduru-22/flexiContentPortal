@@ -9,7 +9,9 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
         phone: partner?.phone || '',
         contact_emails: (partner?.contact_emails || []).join(', '),
         logo_url: partner?.logo_url || '',
-        active: partner?.active ?? true
+        active: partner?.active ?? true,
+        payment_method: partner?.payment_method || '',
+        payment_identifier: partner?.payment_identifier || ''
     });
 
     const [saving, setSaving] = useState(false);
@@ -34,7 +36,9 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
                 .map(s => s.trim())
                 .filter(Boolean),
             logo_url: formData.logo_url || null,
-            active: formData.active
+            active: formData.active,
+            payment_method: formData.payment_method || null,
+            payment_identifier: formData.payment_method ? formData.payment_identifier : null
         };
 
         let result;
@@ -137,6 +141,35 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
                                 placeholder="https://example.com/logo.png"
                             />
+                        </div>
+
+                        <div className="md:col-span-2 border-t pt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Payment Method (for automations)
+                            </label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Where money goes when a user sets up an automatic payment on a product using this partner as its underwriter. Leave blank if this partner never receives automation payments directly (e.g. a pure agent/broker).
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <select
+                                    value={formData.payment_method}
+                                    onChange={(e) => handleChange('payment_method', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                >
+                                    <option value="">No automation payments</option>
+                                    {window.SUPPLIER_BILLER_TYPES.map(t => (
+                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="text"
+                                    value={formData.payment_identifier}
+                                    onChange={(e) => handleChange('payment_identifier', e.target.value)}
+                                    disabled={!formData.payment_method}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                                    placeholder={formData.payment_method === 'till' ? 'Till number' : 'Paybill number'}
+                                />
+                            </div>
                         </div>
 
                         {partner && (

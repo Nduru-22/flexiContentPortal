@@ -9,6 +9,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
 
     const [formData, setFormData] = useState({
         partner_id: product?.partner_id || (partners[0]?.id ?? ''),
+        underwriter_partner_id: product?.underwriter_partner_id || '',
         vertical: product?.vertical || 'insurance',
         title: product?.title || '',
         description: product?.description || '',
@@ -101,6 +102,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         if (isEdit) {
             result = await window.catalogAPI.products.update(product.id, {
                 partner_id: parseInt(formData.partner_id),
+                underwriter_partner_id: formData.underwriter_partner_id ? parseInt(formData.underwriter_partner_id) : null,
                 title: formData.title,
                 description: formData.description,
                 active: formData.active,
@@ -110,6 +112,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         } else {
             result = await window.catalogAPI.products.create({
                 partner_id: parseInt(formData.partner_id),
+                underwriter_partner_id: formData.underwriter_partner_id ? parseInt(formData.underwriter_partner_id) : null,
                 vertical: formData.vertical,
                 title: formData.title,
                 description: formData.description,
@@ -215,6 +218,25 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className={labelCls}>Underwriter / Fund Manager (for automations)</label>
+                            <select
+                                value={formData.underwriter_partner_id}
+                                onChange={(e) => handleChange('underwriter_partner_id', e.target.value)}
+                                className={inputCls}
+                            >
+                                <option value="">Same as Partner above</option>
+                                {partners.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}{p.payment_method ? ` — ${p.payment_method} ${p.payment_identifier || ''}` : ' (no payment method set)'}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Who a user's automatic payment on this product actually goes to. Only set this when it's different from the Partner above (e.g. Partner is the selling agent, but the underwriter holding the money is someone else). Set the underwriter's Till/Paybill on their own Partner record first.
+                            </p>
                         </div>
 
                         <div className="md:col-span-2">
