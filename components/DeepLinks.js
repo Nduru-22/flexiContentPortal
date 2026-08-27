@@ -155,7 +155,7 @@ function DeepLinks() {
                                         <td className="px-4 py-3">
                                             <div className="font-mono text-xs text-gray-700">{link.template_id}</div>
                                             <div className="font-mono text-xs text-indigo-600 mt-0.5">
-                                                {window.deeplinksAPI.publicUrl(link.template_id)}
+                                                {window.deeplinksAPI.publicUrl(link.template_id, link.template_type)}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-gray-800">{getTargetLabel(link)}</td>
