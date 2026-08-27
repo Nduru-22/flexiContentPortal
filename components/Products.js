@@ -18,7 +18,15 @@ window.Products = function Products() {
         setLoading(true);
         const result = await window.api.products.getAll();
         if (result.status === '4000') {
-            setProducts(result.detail || []);
+            // getShopItems() (zeegoBackend) returns detail as
+            // {items, total_count, limit, offset} -- not a bare array.
+            // This used to set `products` to that whole object, and the
+            // very first products.filter(...) below then threw (no
+            // .filter on a plain object) -- an uncaught render error with
+            // no error boundary anywhere in this app unmounts the entire
+            // tree, which is why the page went blank white on navigating
+            // here, not just failed to load.
+            setProducts(result.detail?.items || []);
         }
         setLoading(false);
     };

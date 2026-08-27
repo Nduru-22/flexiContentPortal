@@ -26,7 +26,9 @@ function App() {
     const loadStats = async () => {
         const result = await window.api.products.getAll();
         if (result.status === '4000') {
-            const products = result.detail || [];
+            // Same shape as Products.js's loadProducts() -- detail is
+            // {items, total_count, limit, offset}, not a bare array.
+            const products = result.detail?.items || [];
             setStats({
                 totalProducts: products.length,
                 activeProducts: products.filter(p => p.status === 'active').length,
