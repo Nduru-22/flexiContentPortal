@@ -54,6 +54,14 @@ window.deeplinksAPI = {
     // GET /deeplink-template/<template_type>/<template_id> route requires
     // both, there's no lookup by id alone.
     publicUrl(templateId, templateType) {
+        // A caller that forgets templateType (it's happened twice now --
+        // both DeepLinks.js call sites originally omitted it) used to
+        // silently bake the literal string "undefined" into the URL
+        // instead of failing anywhere visible. Loud beats silent here --
+        // a broken link only shows up once someone's already scanned it.
+        if (!templateType) {
+            throw new Error(`deeplinksAPI.publicUrl: templateType is required (got ${templateType} for templateId ${templateId})`);
+        }
         return `${window.APP_CONFIG.PUBLIC_DEEPLINK_BASE}/t/${templateType}/${templateId}`;
     },
 
