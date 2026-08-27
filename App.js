@@ -26,7 +26,9 @@ function App() {
     const loadStats = async () => {
         const result = await window.api.products.getAll();
         if (result.status === '4000') {
-            const products = result.detail || [];
+            // Same shape as Products.js's loadProducts() -- detail is
+            // {items, total_count, limit, offset}, not a bare array.
+            const products = result.detail?.items || [];
             setStats({
                 totalProducts: products.length,
                 activeProducts: products.filter(p => p.status === 'active').length,
@@ -89,7 +91,8 @@ function App() {
 
     // Define content navigation items
     const contentNavItems = [
-        { id: 'content', label: '📚 All Content', component: Content }
+        { id: 'content', label: '📚 All Content', component: Content },
+        { id: 'premium-content', label: '💰 Premium Content', component: window.PremiumContent }
     ];
 
     // Define deep links navigation items
@@ -191,8 +194,8 @@ function App() {
                         </div>
                     </div>
 
-                    {/* Tabs Navigation - shop and plans sections have sub-tabs */}
-                    {(currentSection === 'shop' || currentSection === 'plans') && (
+                    {/* Tabs Navigation - shop, content, and plans sections have sub-tabs */}
+                    {(currentSection === 'shop' || currentSection === 'content' || currentSection === 'plans') && (
                         <nav className="flex space-x-1 -mb-px overflow-x-auto">
                             {currentNavItems.map((item) => (
                                 <button

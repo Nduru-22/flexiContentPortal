@@ -18,7 +18,15 @@ window.Products = function Products() {
         setLoading(true);
         const result = await window.api.products.getAll();
         if (result.status === '4000') {
-            setProducts(result.detail || []);
+            // getShopItems() (zeegoBackend) returns detail as
+            // {items, total_count, limit, offset} -- not a bare array.
+            // This used to set `products` to that whole object, and the
+            // very first products.filter(...) below then threw (no
+            // .filter on a plain object) -- an uncaught render error with
+            // no error boundary anywhere in this app unmounts the entire
+            // tree, which is why the page went blank white on navigating
+            // here, not just failed to load.
+            setProducts(result.detail?.items || []);
         }
         setLoading(false);
     };
@@ -175,20 +183,26 @@ window.Products = function Products() {
                                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                                         {product.description || 'No description'}
                                     </p>
-                                    
+
+                                    {product.juno_eligible === false && (
+                                        <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-800 mb-2">
+                                            Not shown to Juno accounts
+                                        </span>
+                                    )}
+
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-2xl font-bold text-purple-600">
                                             KES {product.price?.toLocaleString()}
                                         </span>
                                         <span className={`text-sm px-2 py-1 rounded ${
-                                            product.inventory_count < 10 
-                                                ? 'bg-red-100 text-red-700' 
+                                            product.inventory_count < 10
+                                                ? 'bg-red-100 text-red-700'
                                                 : 'bg-green-100 text-green-700'
                                         }`}>
                                             Stock: {product.inventory_count || 0}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleEdit(product)}

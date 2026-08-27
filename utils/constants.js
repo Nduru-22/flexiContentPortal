@@ -35,6 +35,25 @@ window.DISCOUNT_TYPES = [
     { value: 'fixed', label: 'Fixed Amount' }
 ];
 
+// Premium Content Configuration (loaded from APP_CONFIG.AUTH_BASE)
+
+window.PREMIUM_CONTENT_TYPES = [
+    { value: 'video', label: 'Single Video', icon: '🎥' },
+    { value: 'series', label: 'Video Series', icon: '🎬' },
+    { value: 'pdf', label: 'Document (PDF)', icon: '📄' },
+    { value: 'budget', label: 'Budget Template', icon: '💰' }
+];
+
+// Suppliers on a budget template's items/sub-items become real Billers on
+// the buyer's own account the moment they buy it (create_budget() in
+// zenvelopes-backend) -- till/paybill only, matching the app's own
+// Till/Paybill payment types (Phone/sendMoney isn't offered here since a
+// template can't know who to send money to on the buyer's behalf).
+window.SUPPLIER_BILLER_TYPES = [
+    { value: 'till', label: 'Till Number' },
+    { value: 'paybill', label: 'Paybill' }
+];
+
 // Content Management Configuration (loaded from APP_CONFIG.CONTENT_API_BASE)
 
 window.CONTENT_CATEGORIES = [
