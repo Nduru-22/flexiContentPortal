@@ -107,6 +107,14 @@ window.DEEPLINK_TYPES = [
     { value: 'challenge', label: 'Challenge', icon: '🏆', picker: 'challenges', optionIdField: 'id', optionNameField: 'name', dataKey: 'challenge_id' },
     { value: 'investment', label: 'Investment Product', icon: '📈', picker: 'investment', optionIdField: 'id', optionNameField: 'title', dataKey: 'product_id' },
     { value: 'insurance', label: 'Insurance Product', icon: '🛡️', picker: 'insurance', optionIdField: 'id', optionNameField: 'title', dataKey: 'product_id' },
+    // No picker -- goal/wallet/budget links are authored templates, not a
+    // pick from an existing entity. Scanning one CREATES a brand new
+    // goal/wallet/budget for whoever scans it (matches DeepLinkManager's
+    // _handleGoalLink/_handleWalletLink/_handleBudgetLink in flexiwallets),
+    // rather than opening something that already exists.
+    { value: 'goal', label: 'Goal Template', icon: '🎯', picker: null },
+    { value: 'wallet', label: 'Wallet Template', icon: '💼', picker: null },
+    { value: 'budget', label: 'Budget Template', icon: '📊', picker: null },
     { value: 'nav', label: 'App Page (Navigation)', icon: '🧭', picker: null }
 ];
 

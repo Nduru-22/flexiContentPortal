@@ -64,6 +64,9 @@ function DeepLinks() {
         const info = getTypeInfo(link.template_type);
         const data = link.template_data || {};
         if (link.template_type === 'nav') return data.label || data.route;
+        if (link.template_type === 'goal') return data.goal_name;
+        if (link.template_type === 'wallet') return data.name;
+        if (link.template_type === 'budget') return data.budget_name;
         return data.label || (info ? data[info.dataKey] : JSON.stringify(data));
     };
 
