@@ -73,12 +73,29 @@ window.deeplinksAPI = {
 
     // Entity lookups for the target picker dropdown, one per DEEPLINK_TYPES.picker key
     options: {
+        // Free/regular Learn-feed content (video/article/external_link/
+        // quick_tip) -- a completely separate table+system from premium
+        // content below. Was previously the only "content"-shaped picker,
+        // which is exactly why a premium content item could never actually
+        // be deep-linked before: this endpoint doesn't know premium
+        // content exists at all.
         async content() {
             const res = await window.api.call(
                 `${window.APP_CONFIG.CONTENT_API_BASE}/explore?limit=200`,
                 { method: 'GET', headers: deeplinkAuthHeaders() }
             );
             return res.status === '4000' ? (res.data?.content || []) : [];
+        },
+
+        // Paid content (video/series/pdf/budget) -- unlocked via cart
+        // purchase in the app. Admin-only list route, same one the
+        // Premium Content tab's own list view uses.
+        async premium_content() {
+            const res = await window.api.call(
+                `${window.APP_CONFIG.AUTH_BASE}/premium-content-admin`,
+                { method: 'GET', headers: deeplinkAuthHeaders() }
+            );
+            return res.status === '4000' ? (res.detail || []) : [];
         },
 
         async shop() {
