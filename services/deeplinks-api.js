@@ -43,10 +43,18 @@ window.deeplinksAPI = {
     },
 
     // The link that actually goes on the QR code / gets handed to the admin.
-    // flexiwallets.com/deeplink/<slug> resolves the template itself (zero-tap
-    // open for installed-app users, "Get the App" landing otherwise).
-    publicUrl(templateId) {
-        return `${window.APP_CONFIG.PUBLIC_DEEPLINK_BASE}/${templateId}`;
+    // Must be /deeplink/t/<type>/<id> -- that's the one shape DeepLinkManager
+    // (flexiwallets, _looksLikeDeepLink/_handleDeepLink) and the platform
+    // App Links / Universal Links registrations (android:pathPrefix
+    // "/deeplink/t/" in AndroidManifest.xml, the matching apple-app-site-
+    // association "paths" entry) actually recognize -- a bare
+    // /deeplink/<id> matches neither, so the OS never hands it to the app
+    // at all and it just 404s in the browser instead. Needs templateType
+    // for the same reason the app's own fetch does: the backend's
+    // GET /deeplink-template/<template_type>/<template_id> route requires
+    // both, there's no lookup by id alone.
+    publicUrl(templateId, templateType) {
+        return `${window.APP_CONFIG.PUBLIC_DEEPLINK_BASE}/t/${templateType}/${templateId}`;
     },
 
     // Internal only — what that page's own code calls to resolve the

@@ -51,7 +51,7 @@ function DeepLinks() {
     };
 
     const handleCopy = (link) => {
-        const url = window.deeplinksAPI.publicUrl(link.template_id);
+        const url = window.deeplinksAPI.publicUrl(link.template_id, link.template_type);
         navigator.clipboard.writeText(url).then(() => {
             setCopiedId(link.template_id);
             setTimeout(() => setCopiedId(''), 2000);
