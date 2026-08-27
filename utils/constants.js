@@ -17,9 +17,16 @@ window.STORAGE_KEYS = {
     EXPIRES: window.ENV?.EXPIRES_KEY || 'admin_expires'
 };
 
+// 'digital' used to sit here as a stand-in for premium content, back before
+// Premium Content had its own tab/model. It was never actually wired to
+// content access -- checkout only grants content when the cart item was
+// added with itemservice: "premium_content" (set by the dedicated Premium
+// Content purchase flow, see endpoints.dart's addtocart), which nothing in
+// a "digital" shop product ever set. Removed so admins aren't offered a
+// shop product type that looks like it creates premium content but
+// doesn't -- premium content is created from its own tab now.
 window.PRODUCT_TYPES = [
     { value: 'physical', label: 'Physical Product' },
-    { value: 'digital', label: 'Digital Product' },
     { value: 'event_ticket', label: 'Event Ticket' },
     { value: 'service', label: 'Service' }
 ];
