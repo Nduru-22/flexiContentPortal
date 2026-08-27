@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Get FlexiWallets | Flexiwallets</title>
+    <meta name="description" content="FlexiWallets — save, budget, and automate your money, together.">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Same design tokens as product-detail.html — the one other public,
+         non-admin page in this repo that already correctly matches the
+         real app's theme (colors pulled directly from the Flutter app's
+         own theme constants: primary-container = _darkBg, secondary-
+         container = appAccent, etc.). Kept identical on purpose so any
+         page a scanned link can land on reads as one system. -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#499d8f",
+                        "inverse-on-surface": "#f2f0ed",
+                        "error-container": "#ffdad6",
+                        "error": "#BA1A1A",
+                        "tertiary-container": "#002e28",
+                        "inverse-surface": "#30312e",
+                        "secondary": "#a14000",
+                        "outline": "#72787a",
+                        "on-surface-variant": "#41484a",
+                        "on-secondary-fixed": "#351000",
+                        "on-background": "#1b1c1a",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-primary": "#ffffff",
+                        "text-secondary": "#3E4946",
+                        "surface-container": "#F2EFE9",
+                        "surface": "#FFFFFF",
+                        "surface-container-highest": "#e4e2de",
+                        "surface-dim": "#dbdad6",
+                        "primary-fixed-dim": "#adccd5",
+                        "success": "#00C851",
+                        "surface-bright": "#fbf9f5",
+                        "primary-container": "#0d2c33",
+                        "on-primary-fixed-variant": "#2e4b52",
+                        "primary": "#00171c",
+                        "inverse-primary": "#adccd5",
+                        "accent-light": "#FF9A5C",
+                        "on-secondary-fixed-variant": "#7b2f00",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#83d5c6",
+                        "outline-variant": "#c1c7ca",
+                        "tertiary-fixed": "#9ff2e2",
+                        "tertiary": "#001713",
+                        "on-primary-container": "#77949c",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e4e2de",
+                        "surface-container-low": "#f5f3ef",
+                        "text-hint": "#6E7976",
+                        "primary-fixed": "#c9e8f1",
+                        "surface-container-high": "#eae8e4",
+                        "surface-tint": "#46636b",
+                        "on-surface": "#1b1c1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "secondary-container": "#ff7a32",
+                        "divider": "#BEC9C5",
+                        "background": "#fbf9f5",
+                        "on-secondary-container": "#622400",
+                        "on-primary-fixed": "#001f26",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    borderRadius: { "card": "20px" },
+                    spacing: {
+                        "gutter": "16px",
+                        "section-padding": "20px",
+                        "card-padding": "16px",
+                        "stack-lg": "24px"
+                    },
+                    fontFamily: {
+                        "h4": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"],
+                        "h3": ["Plus Jakarta Sans"], "h2": ["Plus Jakarta Sans"], "h1": ["Plus Jakarta Sans"],
+                        "body-lg": ["Manrope"], "button": ["Manrope"], "body-md": ["Manrope"],
+                        "label-md": ["Manrope"], "label-lg": ["Manrope"], "overline": ["Manrope"],
+                        "body-sm": ["Manrope"], "caption": ["Manrope"]
+                    },
+                    fontSize: {
+                        "h4": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "display": ["44px", { lineHeight: "50px", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "h3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "h2": ["26px", { lineHeight: "34px", fontWeight: "700" }],
+                        "h1": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "button": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+                        "label-md": ["14px", { lineHeight: "18px", fontWeight: "600" }],
+                        "label-lg": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "overline": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "caption": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .custom-shadow { box-shadow: 0 4px 20px 0 rgba(13, 44, 51, 0.04); }
+        .cta-shadow { box-shadow: 0 12px 24px 0 rgba(255, 122, 50, 0.28); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-body-md">
+
+    <!-- Header — same sticky primary-container pattern as product-detail.html -->
+    <header class="bg-primary-container text-on-primary w-full top-0 sticky z-50 shadow-sm">
+        <div class="flex items-center justify-between px-gutter h-16 w-full max-w-[1140px] mx-auto">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary-container">savings</span>
+                <span class="font-h3 text-h3 text-on-primary">FlexiWallets</span>
+            </div>
+            <span class="font-overline text-overline text-on-primary-container uppercase tracking-wider hidden sm:block">
+                Simple, together money
+            </span>
+        </div>
+    </header>
+
+    <main class="max-w-[1140px] mx-auto px-4 md:px-gutter">
+
+        <!-- Hero -->
+        <section class="pt-16 pb-12 text-center max-w-[640px] mx-auto">
+            <p class="font-overline text-overline text-secondary uppercase tracking-widest mb-4">
+                You'll need the app for this
+            </p>
+            <h1 class="font-display text-display text-primary text-balance">
+                Save, budget, and automate — together.
+            </h1>
+            <p class="font-body-lg text-body-lg text-text-secondary mt-5">
+                Whoever sent you here wants to share something on FlexiWallets — a goal, a budget,
+                a piece of content. Open it in the app to see it.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+                <!-- TODO: replace with the real Play Store listing URL -->
+                <a href="#" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 cta-shadow">
+                    <span class="material-symbols-outlined text-[20px]">android</span>
+                    Get it on Google Play
+                </a>
+                <!-- TODO: replace with the real App Store listing URL -->
+                <a href="#" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-on-primary font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-[20px]">phone_iphone</span>
+                    Download on the App Store
+                </a>
+            </div>
+
+            <p class="font-caption text-caption text-text-hint mt-4">
+                Already have FlexiWallets? Open this link on your phone and it'll launch straight in the app.
+            </p>
+        </section>
+
+        <!-- Feature strip -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-stack-md pb-16">
+            <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                <div class="bg-primary/10 text-primary p-2 rounded-full w-fit mb-3">
+                    <span class="material-symbols-outlined text-[22px]">flag</span>
+                </div>
+                <p class="font-h4 text-h4 text-primary mb-1">Goals that stick</p>
+                <p class="font-body-sm text-body-sm text-text-hint">
+                    Set a target, watch it grow, get there without doing the math yourself.
+                </p>
+            </div>
+            <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                <div class="bg-secondary/10 text-secondary p-2 rounded-full w-fit mb-3">
+                    <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+                </div>
+                <p class="font-h4 text-h4 text-primary mb-1">Budgets that hold</p>
+                <p class="font-body-sm text-body-sm text-text-hint">
+                    Split money into envelopes for what it's actually for, before it disappears.
+                </p>
+            </div>
+            <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                <div class="bg-success/10 text-success p-2 rounded-full w-fit mb-3">
+                    <span class="material-symbols-outlined text-[22px]">autorenew</span>
+                </div>
+                <p class="font-h4 text-h4 text-primary mb-1">Automated, not remembered</p>
+                <p class="font-body-sm text-body-sm text-text-hint">
+                    Set it once — payments and savings happen on their own from there.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-divider/20 py-8">
+        <div class="max-w-[1140px] mx-auto px-4 md:px-gutter flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p class="font-caption text-caption text-text-hint">© FlexiWallets</p>
+            <p class="font-caption text-caption text-text-hint">flexiwallets.com</p>
+        </div>
+    </footer>
+
+</body>
+</html>
