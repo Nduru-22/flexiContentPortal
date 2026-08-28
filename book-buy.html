@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Buy the Book | Flexiwallets</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Same design tokens as product-detail.html / deeplink-landing.html --
+         kept identical on purpose so a buy page reads as one system with
+         the rest of the app. -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#499d8f", "inverse-on-surface": "#f2f0ed",
+                        "error-container": "#ffdad6", "error": "#BA1A1A", "tertiary-container": "#002e28",
+                        "inverse-surface": "#30312e", "secondary": "#a14000", "outline": "#72787a",
+                        "on-surface-variant": "#41484a", "on-secondary-fixed": "#351000",
+                        "on-background": "#1b1c1a", "on-tertiary-fixed": "#00201c", "on-primary": "#ffffff",
+                        "text-secondary": "#3E4946", "surface-container": "#F2EFE9", "surface": "#FFFFFF",
+                        "surface-container-highest": "#e4e2de", "surface-dim": "#dbdad6",
+                        "primary-fixed-dim": "#adccd5", "success": "#00C851", "surface-bright": "#fbf9f5",
+                        "primary-container": "#0d2c33", "on-primary-fixed-variant": "#2e4b52",
+                        "primary": "#00171c", "inverse-primary": "#adccd5", "accent-light": "#FF9A5C",
+                        "on-secondary-fixed-variant": "#7b2f00", "on-tertiary-fixed-variant": "#005047",
+                        "on-tertiary": "#ffffff", "tertiary-fixed-dim": "#83d5c6", "outline-variant": "#c1c7ca",
+                        "tertiary-fixed": "#9ff2e2", "tertiary": "#001713", "on-primary-container": "#77949c",
+                        "on-error": "#ffffff", "on-error-container": "#93000a", "secondary-fixed-dim": "#ffb694",
+                        "on-secondary": "#ffffff", "surface-variant": "#e4e2de", "surface-container-low": "#f5f3ef",
+                        "text-hint": "#6E7976", "primary-fixed": "#c9e8f1", "surface-container-high": "#eae8e4",
+                        "surface-tint": "#46636b", "on-surface": "#1b1c1a", "secondary-fixed": "#ffdbcc",
+                        "secondary-container": "#ff7a32", "divider": "#BEC9C5", "background": "#fbf9f5",
+                        "on-secondary-container": "#622400", "on-primary-fixed": "#001f26",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    borderRadius: { "card": "20px" },
+                    spacing: { "gutter": "16px", "section-padding": "20px", "card-padding": "16px", "stack-lg": "24px" },
+                    fontFamily: {
+                        "h4": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"], "h3": ["Plus Jakarta Sans"],
+                        "h2": ["Plus Jakarta Sans"], "h1": ["Plus Jakarta Sans"], "body-lg": ["Manrope"],
+                        "button": ["Manrope"], "body-md": ["Manrope"], "label-md": ["Manrope"],
+                        "label-lg": ["Manrope"], "overline": ["Manrope"], "body-sm": ["Manrope"], "caption": ["Manrope"]
+                    },
+                    fontSize: {
+                        "h4": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "display": ["40px", { lineHeight: "46px", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "h3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "h2": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "h1": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "button": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+                        "label-md": ["14px", { lineHeight: "18px", fontWeight: "600" }],
+                        "label-lg": ["16px", { lineHeight: "20px", fontWeight: "700" }],
+                        "overline": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "caption": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
+        .custom-shadow { box-shadow: 0 4px 20px 0 rgba(13, 44, 51, 0.04); }
+        .cta-shadow { box-shadow: 0 12px 24px 0 rgba(255, 122, 50, 0.28); }
+        .spinner { border: 3px solid rgba(13,44,51,0.12); border-radius: 50%; border-top-color: #0d2c33; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-body-md">
+
+    <header class="bg-primary-container text-on-primary w-full top-0 sticky z-50 shadow-sm">
+        <div class="flex items-center gap-2 px-gutter h-16 w-full max-w-[720px] mx-auto">
+            <span class="material-symbols-outlined text-secondary-container">menu_book</span>
+            <span class="font-h3 text-h3 text-on-primary">FlexiWallets</span>
+        </div>
+    </header>
+
+    <main class="max-w-[720px] mx-auto px-4 md:px-gutter py-10" id="app">
+        <div class="text-center py-20">
+            <div class="spinner mx-auto w-8 h-8"></div>
+            <p class="font-body-sm text-body-sm text-text-hint mt-4">Loading book…</p>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'https://api.zeegoapp.com/payments/api/v1';
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get('slug');
+        const app = document.getElementById('app');
+
+        function money(n) { return 'KES ' + Number(n).toLocaleString('en-KE', { minimumFractionDigits: 0 }); }
+
+        function errorState(message) {
+            app.innerHTML = `
+                <div class="text-center py-20">
+                    <span class="material-symbols-outlined text-error text-[40px]">error_outline</span>
+                    <p class="font-body-md text-body-md text-on-surface mt-3">${message}</p>
+                </div>`;
+        }
+
+        if (!slug) {
+            errorState('No book specified.');
+        } else {
+            loadBook();
+        }
+
+        function loadBook() {
+            fetch(`${API_BASE}/books/${encodeURIComponent(slug)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status !== '4000' || !data.detail) throw new Error('not found');
+                    renderBook(data.detail);
+                })
+                .catch(() => errorState("We couldn't find this book."));
+        }
+
+        function renderBook(book) {
+            app.innerHTML = `
+                <div class="bg-surface rounded-card custom-shadow overflow-hidden">
+                    ${book.cover_url ? `<img src="${book.cover_url}" alt="${book.title}" class="w-full h-56 object-cover">` : ''}
+                    <div class="p-card-padding sm:p-8">
+                        <p class="font-overline text-overline text-secondary uppercase tracking-widest mb-2">Web edition</p>
+                        <h1 class="font-display text-display text-primary text-balance">${book.title}</h1>
+                        ${book.description ? `<p class="font-body-lg text-body-lg text-text-secondary mt-4">${book.description}</p>` : ''}
+
+                        <div class="flex items-center justify-between mt-8 pt-6 border-t border-divider/30">
+                            <div>
+                                <p class="font-caption text-caption text-text-hint">Price</p>
+                                <p class="font-h1 text-h1 text-primary">${money(book.price)}</p>
+                            </div>
+                            <div class="flex items-center gap-1 text-text-hint">
+                                <span class="material-symbols-outlined text-[18px]">devices</span>
+                                <p class="font-caption text-caption">Read on any device</p>
+                            </div>
+                        </div>
+
+                        <div id="buy-step" class="mt-8">
+                            <label class="font-label-md text-label-md text-on-surface block mb-2">M-Pesa phone number</label>
+                            <input id="phone" type="tel" placeholder="07XX XXX XXX" inputmode="tel"
+                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
+                            <p id="buy-error" class="font-caption text-caption text-error mt-2 hidden"></p>
+                            <button id="buy-btn" onclick="startPurchase('${book.slug}')"
+                                class="w-full mt-4 flex items-center justify-center gap-2 px-8 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 cta-shadow">
+                                <span class="material-symbols-outlined text-[20px]">bolt</span>
+                                Pay with M-Pesa
+                            </button>
+                            <p class="font-caption text-caption text-text-hint text-center mt-4">
+                                Already bought this? <a href="book-access.html?slug=${book.slug}" class="text-secondary font-semibold">Get access</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        let pollTimer = null;
+
+        function startPurchase(slug) {
+            const phoneInput = document.getElementById('phone');
+            const errorEl = document.getElementById('buy-error');
+            const btn = document.getElementById('buy-btn');
+            const phone = phoneInput.value.trim();
+
+            errorEl.classList.add('hidden');
+            if (!phone) { errorEl.textContent = 'Enter your M-Pesa phone number.'; errorEl.classList.remove('hidden'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Starting payment…';
+
+            fetch(`${API_BASE}/books/purchase`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug, phone_number: phone })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== '4000') {
+                    errorEl.textContent = data.message || 'Could not start payment.';
+                    errorEl.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">bolt</span> Pay with M-Pesa';
+                    return;
+                }
+                showWaiting(phone, slug, data.detail.reqId);
+            })
+            .catch(() => {
+                errorEl.textContent = "Couldn't reach the payment service. Please try again.";
+                errorEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">bolt</span> Pay with M-Pesa';
+            });
+        }
+
+        function showWaiting(phone, slug, reqId) {
+            document.getElementById('buy-step').innerHTML = `
+                <div class="text-center py-6">
+                    <div class="spinner mx-auto w-8 h-8"></div>
+                    <p class="font-h4 text-h4 text-on-surface mt-4">Check your phone</p>
+                    <p class="font-body-sm text-body-sm text-text-hint mt-1">Approve the M-Pesa prompt on ${phone} to finish.</p>
+                </div>`;
+
+            let attempts = 0;
+            pollTimer = setInterval(() => {
+                attempts++;
+                fetch(`${API_BASE}/books/purchase/status?reqId=${reqId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const status = data.detail && data.detail.status;
+                        if (status === 'paid') {
+                            clearInterval(pollTimer);
+                            onPaid(phone, slug);
+                        } else if (status === 'failed') {
+                            clearInterval(pollTimer);
+                            onFailed(slug);
+                        } else if (attempts > 40) { // ~2 minutes at 3s
+                            clearInterval(pollTimer);
+                            onTimedOut(phone, slug, reqId);
+                        }
+                    });
+            }, 3000);
+        }
+
+        function onPaid(phone, slug) {
+            document.getElementById('buy-step').innerHTML = `
+                <div class="text-center py-6">
+                    <span class="material-symbols-outlined text-success text-[40px]">check_circle</span>
+                    <p class="font-h4 text-h4 text-on-surface mt-3">Payment received</p>
+                    <p class="font-body-sm text-body-sm text-text-hint mt-1">We're sending an access code to ${phone}…</p>
+                </div>`;
+            window.location.href = `book-access.html?slug=${slug}&phone=${encodeURIComponent(phone)}&auto=1`;
+        }
+
+        function onFailed(slug) {
+            document.getElementById('buy-step').innerHTML = `
+                <div class="text-center py-6">
+                    <span class="material-symbols-outlined text-error text-[36px]">error_outline</span>
+                    <p class="font-body-md text-body-md text-on-surface mt-3">The payment wasn't completed.</p>
+                    <button onclick="window.location.reload()" class="mt-4 px-6 py-3 bg-primary text-on-primary font-button text-button rounded-xl">Try again</button>
+                </div>`;
+        }
+
+        function onTimedOut(phone, slug, reqId) {
+            document.getElementById('buy-step').innerHTML = `
+                <div class="text-center py-6">
+                    <span class="material-symbols-outlined text-text-hint text-[36px]">schedule</span>
+                    <p class="font-body-md text-body-md text-on-surface mt-3">Still waiting for the payment.</p>
+                    <p class="font-caption text-caption text-text-hint mt-1">Already paid? Tap below to check again.</p>
+                    <button onclick="checkOnce('${phone}','${slug}','${reqId}')" class="mt-4 px-6 py-3 bg-primary text-on-primary font-button text-button rounded-xl">I've paid</button>
+                </div>`;
+        }
+
+        function checkOnce(phone, slug, reqId) {
+            fetch(`${API_BASE}/books/purchase/status?reqId=${reqId}`)
+                .then(r => r.json())
+                .then(data => {
+                    const status = data.detail && data.detail.status;
+                    if (status === 'paid') onPaid(phone, slug);
+                    else if (status === 'failed') onFailed(slug);
+                    else showWaiting(phone, slug, reqId);
+                });
+        }
+    </script>
+</body>
+</html>
