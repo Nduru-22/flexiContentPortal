@@ -192,10 +192,11 @@
                     errorEl.classList.remove('hidden');
                     return;
                 }
-                try {
-                    localStorage.setItem(`book_token_${slug}`, data.detail.token);
-                } catch (e) { /* private browsing etc -- token still works via URL below */ }
-                window.location.href = `book-read.html?slug=${slug}&token=${data.detail.token}`;
+                // Plain top-level navigation (not a fetch) -- lets the
+                // backend set a same-origin cookie with zero CORS
+                // complications, then drop the buyer straight into their
+                // own book pages, gated from there on by that cookie.
+                window.location.href = `https://api.zeegoapp.com${data.detail.enter_url}`;
             })
             .catch(() => {
                 btn.disabled = false;

@@ -120,54 +120,118 @@
                 .catch(() => errorState("We couldn't find this book."));
         }
 
+        let currentBook = null;
+
         function renderBook(book) {
+            currentBook = book;
             app.innerHTML = `
                 <div class="bg-surface rounded-card custom-shadow overflow-hidden">
                     ${book.cover_url ? `<img src="${book.cover_url}" alt="${book.title}" class="w-full h-56 object-cover">` : ''}
                     <div class="p-card-padding sm:p-8">
-                        <p class="font-overline text-overline text-secondary uppercase tracking-widest mb-2">Web edition</p>
+                        <p class="font-overline text-overline text-secondary uppercase tracking-widest mb-2">Choose your edition</p>
                         <h1 class="font-display text-display text-primary text-balance">${book.title}</h1>
                         ${book.description ? `<p class="font-body-lg text-body-lg text-text-secondary mt-4">${book.description}</p>` : ''}
 
-                        <div class="flex items-center justify-between mt-8 pt-6 border-t border-divider/30">
-                            <div>
-                                <p class="font-caption text-caption text-text-hint">Price</p>
-                                <p class="font-h1 text-h1 text-primary">${money(book.price)}</p>
-                            </div>
-                            <div class="flex items-center gap-1 text-text-hint">
-                                <span class="material-symbols-outlined text-[18px]">devices</span>
-                                <p class="font-caption text-caption">Read on any device</p>
-                            </div>
-                        </div>
-
                         <div id="buy-step" class="mt-8">
-                            <label class="font-label-md text-label-md text-on-surface block mb-2">M-Pesa phone number</label>
-                            <input id="phone" type="tel" placeholder="07XX XXX XXX" inputmode="tel"
-                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
-                            <p id="buy-error" class="font-caption text-caption text-error mt-2 hidden"></p>
-                            <button id="buy-btn" onclick="startPurchase('${book.slug}')"
-                                class="w-full mt-4 flex items-center justify-center gap-2 px-8 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 cta-shadow">
-                                <span class="material-symbols-outlined text-[20px]">bolt</span>
-                                Pay with M-Pesa
-                            </button>
-                            <p class="font-caption text-caption text-text-hint text-center mt-4">
-                                Already bought this? <a href="book-access.html?slug=${book.slug}" class="text-secondary font-semibold">Get access</a>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button onclick="chooseFormat('digital')" class="text-left p-6 rounded-xl border-2 border-divider hover:border-secondary-container transition-colors">
+                                    <span class="material-symbols-outlined text-secondary-container text-[28px]">bolt</span>
+                                    <p class="font-h4 text-h4 text-on-surface mt-2">Digital</p>
+                                    <p class="font-caption text-caption text-text-hint mt-1">Instant access, read on any device</p>
+                                    <p class="font-h3 text-h3 text-primary mt-3">${money(book.price)}</p>
+                                </button>
+                                <button onclick="chooseFormat('physical')" class="text-left p-6 rounded-xl border-2 border-divider hover:border-secondary-container transition-colors">
+                                    <span class="material-symbols-outlined text-secondary-container text-[28px]">local_shipping</span>
+                                    <p class="font-h4 text-h4 text-on-surface mt-2">Physical copy</p>
+                                    <p class="font-caption text-caption text-text-hint mt-1">Delivered to your address</p>
+                                    <p class="font-h3 text-h3 text-primary mt-3">${money(book.price_physical)}</p>
+                                </button>
+                            </div>
+                            <p class="font-caption text-caption text-text-hint text-center mt-6">
+                                Already bought the digital edition? <a href="book-access.html?slug=${book.slug}" class="text-secondary font-semibold">Get access</a>
                             </p>
                         </div>
                     </div>
                 </div>`;
         }
 
+        function backToFormats() { renderBook(currentBook); }
+
+        function chooseFormat(type) {
+            const book = currentBook;
+            if (type === 'digital') {
+                document.getElementById('buy-step').innerHTML = `
+                    <button onclick="backToFormats()" class="flex items-center gap-1 font-caption text-caption text-text-hint mb-4">
+                        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Change edition
+                    </button>
+                    <p class="font-h3 text-h3 text-on-surface">Digital -- ${money(book.price)}</p>
+                    <label class="font-label-md text-label-md text-on-surface block mt-4 mb-2">M-Pesa phone number</label>
+                    <input id="phone" type="tel" placeholder="07XX XXX XXX" inputmode="tel"
+                        class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
+                    <p id="buy-error" class="font-caption text-caption text-error mt-2 hidden"></p>
+                    <button id="buy-btn" onclick="startPurchase('digital')"
+                        class="w-full mt-4 flex items-center justify-center gap-2 px-8 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 cta-shadow">
+                        <span class="material-symbols-outlined text-[20px]">bolt</span>
+                        Pay with M-Pesa
+                    </button>`;
+            } else {
+                document.getElementById('buy-step').innerHTML = `
+                    <button onclick="backToFormats()" class="flex items-center gap-1 font-caption text-caption text-text-hint mb-4">
+                        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Change edition
+                    </button>
+                    <p class="font-h3 text-h3 text-on-surface">Physical copy -- ${money(book.price_physical)}</p>
+                    <div class="space-y-3 mt-4">
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface block mb-2">Full name</label>
+                            <input id="delivery-name" type="text" placeholder="Your name"
+                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
+                        </div>
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface block mb-2">Delivery address / location</label>
+                            <textarea id="delivery-address" rows="2" placeholder="Estate, building, town…"
+                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40"></textarea>
+                        </div>
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface block mb-2">Delivery notes (optional)</label>
+                            <input id="delivery-notes" type="text" placeholder="Landmark, preferred time, etc."
+                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
+                        </div>
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface block mb-2">M-Pesa phone number</label>
+                            <input id="phone" type="tel" placeholder="07XX XXX XXX" inputmode="tel"
+                                class="w-full px-4 py-4 rounded-xl border border-divider bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container/40" />
+                        </div>
+                    </div>
+                    <p id="buy-error" class="font-caption text-caption text-error mt-2 hidden"></p>
+                    <button id="buy-btn" onclick="startPurchase('physical')"
+                        class="w-full mt-4 flex items-center justify-center gap-2 px-8 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 cta-shadow">
+                        <span class="material-symbols-outlined text-[20px]">bolt</span>
+                        Pay with M-Pesa
+                    </button>`;
+            }
+        }
+
         let pollTimer = null;
 
-        function startPurchase(slug) {
-            const phoneInput = document.getElementById('phone');
+        function startPurchase(type) {
+            const slug = currentBook.slug;
             const errorEl = document.getElementById('buy-error');
             const btn = document.getElementById('buy-btn');
-            const phone = phoneInput.value.trim();
+            const phone = document.getElementById('phone').value.trim();
 
             errorEl.classList.add('hidden');
             if (!phone) { errorEl.textContent = 'Enter your M-Pesa phone number.'; errorEl.classList.remove('hidden'); return; }
+
+            const payload = { slug, phone_number: phone, purchase_type: type };
+            if (type === 'physical') {
+                const name = document.getElementById('delivery-name').value.trim();
+                const address = document.getElementById('delivery-address').value.trim();
+                if (!name) { errorEl.textContent = 'Enter your full name.'; errorEl.classList.remove('hidden'); return; }
+                if (!address) { errorEl.textContent = 'Enter a delivery address.'; errorEl.classList.remove('hidden'); return; }
+                payload.delivery_name = name;
+                payload.delivery_address = address;
+                payload.delivery_notes = document.getElementById('delivery-notes').value.trim();
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Starting payment…';
@@ -175,7 +239,7 @@
             fetch(`${API_BASE}/books/purchase`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slug, phone_number: phone })
+                body: JSON.stringify(payload)
             })
             .then(r => r.json())
             .then(data => {
@@ -186,7 +250,7 @@
                     btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">bolt</span> Pay with M-Pesa';
                     return;
                 }
-                showWaiting(phone, slug, data.detail.reqId);
+                showWaiting(phone, type, data.detail.reqId);
             })
             .catch(() => {
                 errorEl.textContent = "Couldn't reach the payment service. Please try again.";
@@ -196,7 +260,7 @@
             });
         }
 
-        function showWaiting(phone, slug, reqId) {
+        function showWaiting(phone, type, reqId) {
             document.getElementById('buy-step').innerHTML = `
                 <div class="text-center py-6">
                     <div class="spinner mx-auto w-8 h-8"></div>
@@ -213,29 +277,38 @@
                         const status = data.detail && data.detail.status;
                         if (status === 'paid') {
                             clearInterval(pollTimer);
-                            onPaid(phone, slug);
+                            onPaid(phone, type);
                         } else if (status === 'failed') {
                             clearInterval(pollTimer);
-                            onFailed(slug);
+                            onFailed();
                         } else if (attempts > 40) { // ~2 minutes at 3s
                             clearInterval(pollTimer);
-                            onTimedOut(phone, slug, reqId);
+                            onTimedOut(phone, type, reqId);
                         }
                     });
             }, 3000);
         }
 
-        function onPaid(phone, slug) {
+        function onPaid(phone, type) {
+            if (type === 'physical') {
+                document.getElementById('buy-step').innerHTML = `
+                    <div class="text-center py-6">
+                        <span class="material-symbols-outlined text-success text-[40px]">check_circle</span>
+                        <p class="font-h4 text-h4 text-on-surface mt-3">Payment received</p>
+                        <p class="font-body-sm text-body-sm text-text-hint mt-1">Thank you! We'll deliver your copy to the address you gave us.</p>
+                    </div>`;
+                return;
+            }
             document.getElementById('buy-step').innerHTML = `
                 <div class="text-center py-6">
                     <span class="material-symbols-outlined text-success text-[40px]">check_circle</span>
                     <p class="font-h4 text-h4 text-on-surface mt-3">Payment received</p>
                     <p class="font-body-sm text-body-sm text-text-hint mt-1">We're sending an access code to ${phone}…</p>
                 </div>`;
-            window.location.href = `book-access.html?slug=${slug}&phone=${encodeURIComponent(phone)}&auto=1`;
+            window.location.href = `book-access.html?slug=${currentBook.slug}&phone=${encodeURIComponent(phone)}&auto=1`;
         }
 
-        function onFailed(slug) {
+        function onFailed() {
             document.getElementById('buy-step').innerHTML = `
                 <div class="text-center py-6">
                     <span class="material-symbols-outlined text-error text-[36px]">error_outline</span>
@@ -244,24 +317,24 @@
                 </div>`;
         }
 
-        function onTimedOut(phone, slug, reqId) {
+        function onTimedOut(phone, type, reqId) {
             document.getElementById('buy-step').innerHTML = `
                 <div class="text-center py-6">
                     <span class="material-symbols-outlined text-text-hint text-[36px]">schedule</span>
                     <p class="font-body-md text-body-md text-on-surface mt-3">Still waiting for the payment.</p>
                     <p class="font-caption text-caption text-text-hint mt-1">Already paid? Tap below to check again.</p>
-                    <button onclick="checkOnce('${phone}','${slug}','${reqId}')" class="mt-4 px-6 py-3 bg-primary text-on-primary font-button text-button rounded-xl">I've paid</button>
+                    <button onclick="checkOnce('${phone}','${type}','${reqId}')" class="mt-4 px-6 py-3 bg-primary text-on-primary font-button text-button rounded-xl">I've paid</button>
                 </div>`;
         }
 
-        function checkOnce(phone, slug, reqId) {
+        function checkOnce(phone, type, reqId) {
             fetch(`${API_BASE}/books/purchase/status?reqId=${reqId}`)
                 .then(r => r.json())
                 .then(data => {
                     const status = data.detail && data.detail.status;
-                    if (status === 'paid') onPaid(phone, slug);
-                    else if (status === 'failed') onFailed(slug);
-                    else showWaiting(phone, slug, reqId);
+                    if (status === 'paid') onPaid(phone, type);
+                    else if (status === 'failed') onFailed();
+                    else showWaiting(phone, type, reqId);
                 });
         }
     </script>
