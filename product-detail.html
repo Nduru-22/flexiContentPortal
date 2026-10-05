@@ -132,6 +132,8 @@
         const productId = params.get('id');
         const getterBase = 'https://api.zeegoapp.com/getter/api/v1';
 
+        let currentProduct = null;
+
         if (!productId) {
             document.getElementById('app').innerHTML = '<div class="text-center py-20"><p class="text-red-600 text-lg">Product ID not provided</p></div>';
         } else {
@@ -143,17 +145,48 @@
                 if (data.status !== '4000' || !data.detail) {
                     throw new Error('Product not found');
                 }
-                renderProduct(data.detail);
+                currentProduct = data.detail;
+                renderProduct(currentProduct, 0);
             })
             .catch(err => {
                 document.getElementById('app').innerHTML = `<div class="text-center py-20"><p class="text-red-600 text-lg">Error: ${err.message}</p></div>`;
             });
         }
 
-        function renderProduct(product) {
+        // Called from the options switcher's onclick -- re-renders with the
+        // already-fetched product, just a different selected option.
+        function selectOption(idx) {
+            if (currentProduct) renderProduct(currentProduct, idx);
+        }
+
+        function formatFigureValue(f) {
+            if (f.value === null || f.value === undefined || f.value === '') return 'N/A';
+            const num = typeof f.value === 'number' ? f.value.toLocaleString() : f.value;
+            const unit = (f.unit || '').trim();
+            if (!unit) return num;
+            if (unit === '%') return `${num}%`;
+            if (unit.toUpperCase() === 'KES' || unit.toUpperCase() === 'USD') return `${unit} ${num}`;
+            return `${num} ${unit}`;
+        }
+
+        function renderProduct(product, selectedIdx) {
+            selectedIdx = selectedIdx || 0;
             const details = product.details || {};
             const isInsurance = product.vertical === 'insurance';
             const heroImage = product.media && product.media.length > 0 ? product.media[0].image_url : null;
+
+            // "Options" (variants) -- the product's own details is always option 1
+            // (the default shown on landing), additional options come from
+            // product.variants. Each carries a complete independent details blob.
+            const options = [
+                { id: null, label: 'Option 1', details },
+                ...((product.variants || []).map(v => ({ id: v.id, label: v.label, details: v.details || {} })))
+            ];
+            const activeDetails = options[selectedIdx] ? options[selectedIdx].details : details;
+
+            const figures = (activeDetails.topline_figures && activeDetails.topline_figures.length > 0) ? activeDetails.topline_figures : null;
+            const heroFigure = figures ? figures[0] : null;
+            const restFigures = figures ? figures.slice(1) : [];
 
             let html = `
             <!-- Header Section -->
@@ -186,19 +219,38 @@
                 `;
             }
 
+            // Options switcher -- only shown when there's more than one option
+            if (options.length > 1) {
+                html += `<div class="flex flex-wrap gap-2">`;
+                options.forEach((opt, idx) => {
+                    const activeCls = idx === selectedIdx
+                        ? 'bg-primary text-on-primary'
+                        : 'bg-surface-container text-on-surface hover:bg-surface-container-high';
+                    html += `
+                    <button type="button" onclick="selectOption(${idx})" class="px-4 py-2 rounded-full text-sm font-medium transition ${activeCls}">
+                        ${opt.label}
+                    </button>
+                    `;
+                });
+                html += `</div>`;
+            }
+
             // Main metrics
             if (isInsurance) {
+                const heroLabel = heroFigure ? heroFigure.label.toUpperCase() : 'COVER AMOUNT';
+                const heroValue = heroFigure ? formatFigureValue(heroFigure) : `KES ${(activeDetails.cover_amount || 0).toLocaleString()}`;
+
                 html += `
                 <section class="bg-surface rounded-card p-8 custom-shadow border border-divider/10">
                     <div class="space-y-6">
                         <div class="space-y-1">
-                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">COVER AMOUNT</p>
-                            <p class="font-display text-display text-primary">KES ${(details.cover_amount || 0).toLocaleString()}</p>
+                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">${heroLabel}</p>
+                            <p class="font-display text-display text-primary">${heroValue}</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-divider/20">
                             <div class="space-y-1">
                                 <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">INDICATIVE PREMIUM</p>
-                                <p class="font-amount-sm text-amount-sm text-secondary">KES ${(details.indicative_premium || 0).toLocaleString()} <span class="text-label-md font-label-md text-text-hint font-normal">/ ${details.premium_frequency || 'month'}</span></p>
+                                <p class="font-amount-sm text-amount-sm text-secondary">KES ${(activeDetails.indicative_premium || 0).toLocaleString()} <span class="text-label-md font-label-md text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'month'}</span></p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="bg-success/10 text-success p-2 rounded-full">
@@ -217,36 +269,54 @@
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Premium</p>
-                        <p class="font-h4 text-h4 text-primary">KES ${(details.indicative_premium || 0).toLocaleString()}</p>
+                        <p class="font-h4 text-h4 text-primary">KES ${(activeDetails.indicative_premium || 0).toLocaleString()}</p>
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Frequency</p>
-                        <p class="font-h4 text-h4 text-primary">${(details.premium_frequency || 'monthly').charAt(0).toUpperCase() + (details.premium_frequency || 'monthly').slice(1)}</p>
+                        <p class="font-h4 text-h4 text-primary">${(activeDetails.premium_frequency || 'monthly').charAt(0).toUpperCase() + (activeDetails.premium_frequency || 'monthly').slice(1)}</p>
                     </div>
                 </section>
                 `;
+
+                if (restFigures.length > 0) {
+                    html += `<section class="grid grid-cols-1 md:grid-cols-3 gap-stack-md">`;
+                    restFigures.forEach(f => {
+                        html += `
+                        <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                            <p class="font-label-md text-label-md text-text-hint mb-1">${f.label}</p>
+                            <p class="font-h4 text-h4 text-primary">${formatFigureValue(f)}</p>
+                        </div>
+                        `;
+                    });
+                    html += `</section>`;
+                }
             } else {
+                const heroLabel = heroFigure ? heroFigure.label.toUpperCase() : 'INDICATIVE RETURN';
+                const heroValue = heroFigure ? formatFigureValue(heroFigure) : `${(activeDetails.indicative_return_rate || 0).toFixed(2)}%`;
+                const secondaryFigures = restFigures.length > 0 ? restFigures.slice(0, 3) : [
+                    { label: '1-Year Return', value: activeDetails.return_1y, unit: '%' },
+                    { label: '3-Year Return', value: activeDetails.return_3y, unit: '%' },
+                    { label: 'Min. Investment', value: activeDetails.minimum_investment, unit: 'KES' }
+                ];
+
                 html += `
                 <section class="bg-surface rounded-card p-8 custom-shadow border border-divider/10">
                     <div class="space-y-6">
                         <div class="space-y-1">
-                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">INDICATIVE RETURN</p>
-                            <p class="font-display text-display text-primary">${(details.indicative_return_rate || 0).toFixed(2)}%</p>
+                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">${heroLabel}</p>
+                            <p class="font-display text-display text-primary">${heroValue}</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-divider/20">
+                `;
+                secondaryFigures.forEach(f => {
+                    html += `
                             <div>
-                                <p class="font-label-md text-label-md text-text-hint mb-2">1-Year Return</p>
-                                <p class="font-h3 text-h3 text-secondary">${(details.return_1y || 0).toFixed(2)}%</p>
-                                <p class="font-caption text-caption text-text-hint">as of ${details.performance_as_of ? new Date(details.performance_as_of).toLocaleDateString() : 'N/A'}</p>
+                                <p class="font-label-md text-label-md text-text-hint mb-2">${f.label}</p>
+                                <p class="font-h3 text-h3 text-secondary">${formatFigureValue(f)}</p>
                             </div>
-                            <div>
-                                <p class="font-label-md text-label-md text-text-hint mb-2">3-Year Return</p>
-                                <p class="font-h3 text-h3 text-secondary">${(details.return_3y || 0).toFixed(2)}%</p>
-                            </div>
-                            <div>
-                                <p class="font-label-md text-label-md text-text-hint mb-2">Min. Investment</p>
-                                <p class="font-h3 text-h3 text-secondary">KES ${(details.minimum_investment || 0).toLocaleString()}</p>
-                            </div>
+                    `;
+                });
+                html += `
                         </div>
                     </div>
                 </section>
@@ -258,11 +328,11 @@
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Management Fee</p>
-                        <p class="font-h4 text-h4 text-primary">${(details.management_fee || 0).toFixed(2)}%</p>
+                        <p class="font-h4 text-h4 text-primary">${(activeDetails.management_fee || 0).toFixed(2)}%</p>
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Risk Level</p>
-                        <p class="font-h4 text-h4 text-primary">${(details.risk_level || 'N/A').charAt(0).toUpperCase() + (details.risk_level || 'N/A').slice(1)}</p>
+                        <p class="font-h4 text-h4 text-primary">${(activeDetails.risk_level || 'N/A').charAt(0).toUpperCase() + (activeDetails.risk_level || 'N/A').slice(1)}</p>
                     </div>
                 </section>
                 `;
@@ -353,8 +423,8 @@
                     <div class="hidden sm:block">
                         <p class="font-overline text-overline text-text-hint uppercase tracking-widest">${isInsurance ? 'ESTIMATED PREMIUM' : 'MINIMUM INVESTMENT'}</p>
                         <p class="font-h3 text-h3 text-primary">
-                            KES ${isInsurance ? (details.indicative_premium || 0).toLocaleString() : (details.minimum_investment || 0).toLocaleString()}
-                            ${isInsurance ? `<span class="font-body-sm text-body-sm text-text-hint font-normal">/ ${details.premium_frequency || 'mo'}</span>` : ''}
+                            KES ${isInsurance ? (activeDetails.indicative_premium || 0).toLocaleString() : (activeDetails.minimum_investment || 0).toLocaleString()}
+                            ${isInsurance ? `<span class="font-body-sm text-body-sm text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'mo'}</span>` : ''}
                         </p>
                     </div>
                     <button class="w-full sm:w-auto px-12 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-secondary/20">

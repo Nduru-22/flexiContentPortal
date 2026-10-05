@@ -1,6 +1,6 @@
 // Catalog Product Modal Component (Insurance & Investments)
 // Handles the shared product fields plus the vertical-specific details sub-form.
-// Media/documents management only shows once the product exists (needs a product_id).
+// Media/documents/options management only shows once the product exists (needs a product_id).
 const { useState, useEffect } = React;
 
 window.CatalogProductModal = function CatalogProductModal({ product, partners, onClose, onSave }) {
@@ -21,26 +21,62 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
 
         // insurance details
         category: existingDetails.category || 'health',
-        cover_amount: existingDetails.cover_amount ?? '',
         indicative_premium: existingDetails.indicative_premium ?? '',
         premium_frequency: existingDetails.premium_frequency || 'monthly',
 
         // investment details
         fund_type: existingDetails.fund_type || 'mmf',
-        indicative_return_rate: existingDetails.indicative_return_rate ?? '',
-        minimum_investment: existingDetails.minimum_investment ?? '',
         risk_level: existingDetails.risk_level || 'low',
         management_fee: existingDetails.management_fee ?? '',
         inception_date: existingDetails.inception_date || '',
         custodian: existingDetails.custodian || '',
-        return_1y: existingDetails.return_1y ?? '',
-        return_3y: existingDetails.return_3y ?? '',
         performance_as_of: existingDetails.performance_as_of || ''
     });
 
     const [keyFeatures, setKeyFeatures] = useState(
         existingDetails.key_features && existingDetails.key_features.length ? existingDetails.key_features : [{ title: '', description: '' }]
     );
+
+    // Topline figures: admin-defined named numbers (Cancer Cover, Last Expense
+    // Cover, 1-Year Return, whatever applies) -- replaces the old single
+    // cover_amount / indicative_return_rate / minimum_investment / return_1y /
+    // return_3y fields, since different products need different, differently
+    // labeled headline figures. Seeded from those legacy fields when a product
+    // predates this feature, so nothing old looks empty.
+    const [toplineFigures, setToplineFigures] = useState(() => {
+        if (existingDetails.topline_figures && existingDetails.topline_figures.length) {
+            return existingDetails.topline_figures.map(f => ({ label: f.label || '', value: f.value ?? '', unit: f.unit || '' }));
+        }
+        const seeded = [];
+        if ((product?.vertical || 'insurance') === 'insurance') {
+            if (existingDetails.cover_amount) seeded.push({ label: 'Cover Amount', value: existingDetails.cover_amount, unit: 'KES' });
+        } else {
+            if (existingDetails.indicative_return_rate) seeded.push({ label: 'Indicative Return', value: existingDetails.indicative_return_rate, unit: '%' });
+            if (existingDetails.minimum_investment) seeded.push({ label: 'Minimum Investment', value: existingDetails.minimum_investment, unit: 'KES' });
+            if (existingDetails.return_1y) seeded.push({ label: '1-Year Return', value: existingDetails.return_1y, unit: '%' });
+            if (existingDetails.return_3y) seeded.push({ label: '3-Year Return', value: existingDetails.return_3y, unit: '%' });
+        }
+        return seeded.length ? seeded : [{ label: '', value: '', unit: (product?.vertical || 'insurance') === 'insurance' ? 'KES' : '%' }];
+    });
+
+    // Options (variants) -- e.g. age bands, cover tiers. Each one carries a
+    // COMPLETE independent set of details (not a partial override of the
+    // product's own details above), including its own topline figures.
+    const [variants, setVariants] = useState(
+        (product?.variants || []).map(v => ({
+            _key: `v-${v.id}`,
+            id: v.id,
+            label: v.label || '',
+            premium_frequency: v.details?.premium_frequency || 'monthly',
+            indicative_premium: v.details?.indicative_premium ?? '',
+            risk_level: v.details?.risk_level || 'low',
+            management_fee: v.details?.management_fee ?? '',
+            figures: (v.details?.topline_figures && v.details.topline_figures.length)
+                ? v.details.topline_figures.map(f => ({ label: f.label || '', value: f.value ?? '', unit: f.unit || '' }))
+                : [{ label: '', value: '', unit: '' }]
+        }))
+    );
+    const [removedVariantIds, setRemovedVariantIds] = useState([]);
 
     const [mediaList, setMediaList] = useState(product?.media || []);
     const [documentList, setDocumentList] = useState(product?.documents || []);
@@ -60,31 +96,91 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const addFeature = () => setKeyFeatures(prev => [...prev, { title: '', description: '' }]);
     const removeFeature = (index) => setKeyFeatures(prev => prev.filter((_, i) => i !== index));
 
+    const updateFigure = (index, field, value) => {
+        setToplineFigures(prev => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
+    };
+    const addFigure = () => setToplineFigures(prev => [...prev, { label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }]);
+    const removeFigure = (index) => setToplineFigures(prev => prev.filter((_, i) => i !== index));
+
+    const addVariant = () => {
+        setVariants(prev => [...prev, {
+            _key: `new-${Date.now()}-${Math.random()}`,
+            id: null,
+            label: '',
+            premium_frequency: 'monthly',
+            indicative_premium: '',
+            risk_level: 'low',
+            management_fee: '',
+            figures: [{ label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }]
+        }]);
+    };
+    const removeVariant = (key) => {
+        const v = variants.find(x => x._key === key);
+        if (v && v.id) setRemovedVariantIds(prev => [...prev, v.id]);
+        setVariants(prev => prev.filter(x => x._key !== key));
+    };
+    const updateVariant = (key, field, value) => {
+        setVariants(prev => prev.map(v => (v._key === key ? { ...v, [field]: value } : v)));
+    };
+    const updateVariantFigure = (key, idx, field, value) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, figures: v.figures.map((f, i) => (i === idx ? { ...f, [field]: value } : f)) }
+            : v)));
+    };
+    const addVariantFigure = (key) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, figures: [...v.figures, { label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }] }
+            : v)));
+    };
+    const removeVariantFigure = (key, idx) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, figures: v.figures.filter((_, i) => i !== idx) }
+            : v)));
+    };
+
+    const buildFigures = (figures) => figures
+        .filter(f => f.label.trim())
+        .map(f => ({ label: f.label.trim(), value: f.value === '' ? null : parseFloat(f.value), unit: f.unit.trim() || null }));
+
     const buildDetails = () => {
         const features = keyFeatures
             .filter(f => f.title.trim() || f.description.trim())
             .map(f => ({ title: f.title.trim(), description: f.description.trim() }));
+        const figures = buildFigures(toplineFigures);
         if (formData.vertical === 'insurance') {
             return {
                 category: formData.category,
-                cover_amount: formData.cover_amount === '' ? null : parseFloat(formData.cover_amount),
                 indicative_premium: formData.indicative_premium === '' ? null : parseFloat(formData.indicative_premium),
                 premium_frequency: formData.premium_frequency,
+                topline_figures: figures,
                 key_features: features
             };
         }
         return {
             fund_type: formData.fund_type,
-            indicative_return_rate: formData.indicative_return_rate === '' ? null : parseFloat(formData.indicative_return_rate),
-            minimum_investment: formData.minimum_investment === '' ? null : parseFloat(formData.minimum_investment),
             risk_level: formData.risk_level,
+            topline_figures: figures,
             key_features: features,
             management_fee: formData.management_fee === '' ? null : parseFloat(formData.management_fee),
             inception_date: formData.inception_date || null,
             custodian: formData.custodian || null,
-            return_1y: formData.return_1y === '' ? null : parseFloat(formData.return_1y),
-            return_3y: formData.return_3y === '' ? null : parseFloat(formData.return_3y),
             performance_as_of: formData.performance_as_of || null
+        };
+    };
+
+    const buildVariantDetails = (v) => {
+        const figures = buildFigures(v.figures);
+        if (formData.vertical === 'insurance') {
+            return {
+                premium_frequency: v.premium_frequency,
+                indicative_premium: v.indicative_premium === '' ? null : parseFloat(v.indicative_premium),
+                topline_figures: figures
+            };
+        }
+        return {
+            risk_level: v.risk_level,
+            management_fee: v.management_fee === '' ? null : parseFloat(v.management_fee),
+            topline_figures: figures
         };
     };
 
@@ -122,12 +218,29 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             });
         }
 
-        if (result.status === '4000') {
-            alert(isEdit ? 'Product updated successfully!' : 'Product created successfully! Reopen it from the list to add images or documents.');
-            onSave();
-        } else {
+        if (result.status !== '4000') {
             setError(result.message || 'Operation failed. Please try again.');
+            setSaving(false);
+            return;
         }
+
+        if (isEdit) {
+            for (const variantId of removedVariantIds) {
+                await window.catalogAPI.variants.delete(variantId);
+            }
+            for (const v of variants) {
+                if (!v.label.trim()) continue;
+                const variantDetails = buildVariantDetails(v);
+                if (v.id) {
+                    await window.catalogAPI.variants.update(v.id, { label: v.label.trim(), details: variantDetails });
+                } else {
+                    await window.catalogAPI.variants.create(product.id, { label: v.label.trim(), details: variantDetails });
+                }
+            }
+        }
+
+        alert(isEdit ? 'Product updated successfully!' : 'Product created successfully! Reopen it from the list to add images, documents, or options.');
+        onSave();
         setSaving(false);
     };
 
@@ -174,6 +287,43 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
 
     const inputCls = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none";
     const labelCls = "block text-sm font-medium text-gray-700 mb-1";
+
+    const renderFigures = (figures, update, add, remove) => (
+        <div className="space-y-2">
+            {figures.map((f, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                    <input
+                        type="text"
+                        value={f.label}
+                        onChange={(e) => update(idx, 'label', e.target.value)}
+                        className={inputCls}
+                        placeholder="Label, e.g. Cancer Cover"
+                    />
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={f.value}
+                        onChange={(e) => update(idx, 'value', e.target.value)}
+                        className={`${inputCls} w-32 flex-shrink-0`}
+                        placeholder="Value"
+                    />
+                    <input
+                        type="text"
+                        value={f.unit}
+                        onChange={(e) => update(idx, 'unit', e.target.value)}
+                        className={`${inputCls} w-20 flex-shrink-0`}
+                        placeholder="Unit"
+                    />
+                    <button type="button" onClick={() => remove(idx)} className="px-1 text-gray-400 hover:text-red-500 flex-shrink-0">
+                        <window.Icons.X />
+                    </button>
+                </div>
+            ))}
+            <button type="button" onClick={add} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                + Add figure
+            </button>
+        </div>
+    );
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 fade-in">
@@ -323,7 +473,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                     {formData.vertical === 'insurance' ? (
                         <div className="border-t pt-5">
                             <h4 className="font-semibold text-gray-800 mb-3">Insurance details</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label className={labelCls}>Category *</label>
                                     <select
@@ -350,21 +500,22 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     </select>
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Cover Amount (KES)</label>
-                                    <input type="number" step="0.01" value={formData.cover_amount}
-                                        onChange={(e) => handleChange('cover_amount', e.target.value)} className={inputCls} />
-                                </div>
-                                <div>
                                     <label className={labelCls}>Indicative Premium (KES)</label>
                                     <input type="number" step="0.01" value={formData.indicative_premium}
                                         onChange={(e) => handleChange('indicative_premium', e.target.value)} className={inputCls} />
                                 </div>
                             </div>
+                            <div>
+                                <label className={labelCls}>
+                                    Topline Figures <span className="text-xs text-gray-400">(the big numbers shown on the product page — add as many as this product actually has: Cancer Cover, Dermatology Cover, Last Expense Cover, whatever applies)</span>
+                                </label>
+                                {renderFigures(toplineFigures, updateFigure, addFigure, removeFigure)}
+                            </div>
                         </div>
                     ) : (
                         <div className="border-t pt-5">
                             <h4 className="font-semibold text-gray-800 mb-3">Investment details</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label className={labelCls}>Fund Type *</label>
                                     <select
@@ -391,16 +542,6 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     </select>
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Indicative Return Rate (% p.a.)</label>
-                                    <input type="number" step="0.01" value={formData.indicative_return_rate}
-                                        onChange={(e) => handleChange('indicative_return_rate', e.target.value)} className={inputCls} />
-                                </div>
-                                <div>
-                                    <label className={labelCls}>Minimum Investment (KES)</label>
-                                    <input type="number" step="0.01" value={formData.minimum_investment}
-                                        onChange={(e) => handleChange('minimum_investment', e.target.value)} className={inputCls} />
-                                </div>
-                                <div>
                                     <label className={labelCls}>Management Fee (% p.a.)</label>
                                     <input type="number" step="0.01" value={formData.management_fee}
                                         onChange={(e) => handleChange('management_fee', e.target.value)} className={inputCls} />
@@ -415,30 +556,17 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     <input type="date" value={formData.inception_date}
                                         onChange={(e) => handleChange('inception_date', e.target.value)} className={inputCls} />
                                 </div>
-                                <div />
-
-                                <div className="md:col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                    <p className="text-xs text-amber-800 mb-2">
-                                        Performance snapshot -- ask the fund manager for these figures periodically; this isn't a live computed chart yet.
-                                    </p>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <div>
-                                            <label className={labelCls}>1yr Return (%)</label>
-                                            <input type="number" step="0.01" value={formData.return_1y}
-                                                onChange={(e) => handleChange('return_1y', e.target.value)} className={inputCls} />
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>3yr Return (%)</label>
-                                            <input type="number" step="0.01" value={formData.return_3y}
-                                                onChange={(e) => handleChange('return_3y', e.target.value)} className={inputCls} />
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>As of</label>
-                                            <input type="date" value={formData.performance_as_of}
-                                                onChange={(e) => handleChange('performance_as_of', e.target.value)} className={inputCls} />
-                                        </div>
-                                    </div>
+                                <div>
+                                    <label className={labelCls}>Figures As Of</label>
+                                    <input type="date" value={formData.performance_as_of}
+                                        onChange={(e) => handleChange('performance_as_of', e.target.value)} className={inputCls} />
                                 </div>
+                            </div>
+                            <div>
+                                <label className={labelCls}>
+                                    Topline Figures <span className="text-xs text-gray-400">(the big numbers shown on the fund page — Indicative Return, Minimum Investment, 1-Year Return, 3-Year Return, whatever applies)</span>
+                                </label>
+                                {renderFigures(toplineFigures, updateFigure, addFigure, removeFigure)}
                             </div>
                         </div>
                     )}
@@ -480,8 +608,102 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                         </div>
                     </div>
 
-                    {/* Media & documents -- only once the product exists */}
+                    {/* Options (variants) -- only once the product exists */}
                     {isEdit ? (
+                        <div className="border-t pt-5">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 className="font-semibold text-gray-800">Options</h4>
+                                    <p className="text-xs text-gray-500">
+                                        e.g. age bands, cover tiers. The details above are shown as the first/default option; add more here.
+                                    </p>
+                                </div>
+                                <button type="button" onClick={addVariant} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                    + Add option
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                {variants.map((v) => (
+                                    <div key={v._key} className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={v.label}
+                                                onChange={(e) => updateVariant(v._key, 'label', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Option label, e.g. Age 18-25"
+                                            />
+                                            <button type="button" onClick={() => removeVariant(v._key)} className="px-3 text-gray-400 hover:text-red-500 flex-shrink-0">
+                                                <window.Icons.Trash />
+                                            </button>
+                                        </div>
+
+                                        {formData.vertical === 'insurance' ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className={labelCls}>Premium Frequency</label>
+                                                    <select
+                                                        value={v.premium_frequency}
+                                                        onChange={(e) => updateVariant(v._key, 'premium_frequency', e.target.value)}
+                                                        className={inputCls}
+                                                    >
+                                                        {window.PREMIUM_FREQUENCIES.map(f => (
+                                                            <option key={f.value} value={f.value}>{f.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className={labelCls}>Indicative Premium (KES)</label>
+                                                    <input type="number" step="0.01" value={v.indicative_premium}
+                                                        onChange={(e) => updateVariant(v._key, 'indicative_premium', e.target.value)} className={inputCls} />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className={labelCls}>Risk Level</label>
+                                                    <select
+                                                        value={v.risk_level}
+                                                        onChange={(e) => updateVariant(v._key, 'risk_level', e.target.value)}
+                                                        className={inputCls}
+                                                    >
+                                                        {window.RISK_LEVELS.map(r => (
+                                                            <option key={r.value} value={r.value}>{r.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className={labelCls}>Management Fee (% p.a.)</label>
+                                                    <input type="number" step="0.01" value={v.management_fee}
+                                                        onChange={(e) => updateVariant(v._key, 'management_fee', e.target.value)} className={inputCls} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className={labelCls}>Topline Figures for this option</label>
+                                            {renderFigures(
+                                                v.figures,
+                                                (idx, field, value) => updateVariantFigure(v._key, idx, field, value),
+                                                () => addVariantFigure(v._key),
+                                                (idx) => removeVariantFigure(v._key, idx)
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {variants.length === 0 && (
+                                    <p className="text-sm text-gray-500 italic">No additional options yet — the details above are all that's shown.</p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="border-t pt-5">
+                            <p className="text-sm text-gray-500 italic">Save the product first, then reopen it to add options, a hero image, or documents.</p>
+                        </div>
+                    )}
+
+                    {/* Media & documents -- only once the product exists */}
+                    {isEdit && (
                         <div className="border-t pt-5 space-y-5">
                             <div>
                                 <h4 className="font-semibold text-gray-800 mb-3">Hero image</h4>
@@ -552,10 +774,6 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     Add document
                                 </button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="border-t pt-5">
-                            <p className="text-sm text-gray-500 italic">Save the product first, then reopen it to add a hero image or documents.</p>
                         </div>
                     )}
 

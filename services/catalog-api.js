@@ -145,6 +145,35 @@ window.catalogAPI = {
         }
     },
 
+    // ---------------- Product variants (options, e.g. age bands) ----------------
+    // No standalone getAll -- variants come embedded in products.getOne()'s
+    // response (product.variants), same way media/documents used to be
+    // fetched separately but products.getOne already returns them too.
+    variants: {
+        async create(productId, data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/variant`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ product_id: productId, ...data })
+            });
+        },
+
+        async update(variantId, edits) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/variant`, {
+                method: 'PUT',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ id: variantId, ...edits })
+            });
+        },
+
+        async delete(variantId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/variant?id=${variantId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
     // ---------------- Marketing banners (catalog top carousel) ----------------
     banners: {
         async getAll(filters = {}) {
