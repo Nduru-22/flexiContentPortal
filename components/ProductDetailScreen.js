@@ -6,6 +6,7 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [selectedIdx, setSelectedIdx] = useState(0);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -53,6 +54,25 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
     const partnerName = partnersMap[product.partner_id]?.name || 'Unknown Partner';
     const isInsurance = product.vertical === 'insurance';
 
+    // "Options" (variants) -- the product's own details is always option 1
+    // (the default shown on landing), additional options come from
+    // product.variants. Each carries a complete independent details blob.
+    const options = [
+        { id: null, label: 'Option 1', details },
+        ...(product.variants || []).map(v => ({ id: v.id, label: v.label, details: v.details || {} }))
+    ];
+    const activeDetails = options[selectedIdx]?.details || details;
+
+    const formatFigureValue = (f) => {
+        if (f.value === null || f.value === undefined || f.value === '') return 'N/A';
+        const num = typeof f.value === 'number' ? f.value.toLocaleString() : f.value;
+        const unit = (f.unit || '').trim();
+        if (!unit) return num;
+        if (unit === '%') return `${num}%`;
+        if (unit.toUpperCase() === 'KES' || unit.toUpperCase() === 'USD') return `${unit} ${num}`;
+        return `${num} ${unit}`;
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50">
             <div className="min-h-screen flex items-center justify-center p-4">
@@ -91,6 +111,26 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                             </div>
                         )}
 
+                        {/* Options switcher -- only shown when there's more than one option */}
+                        {options.length > 1 && (
+                            <div className="flex flex-wrap gap-2">
+                                {options.map((opt, idx) => (
+                                    <button
+                                        key={opt.id ?? 'base'}
+                                        type="button"
+                                        onClick={() => setSelectedIdx(idx)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                                            idx === selectedIdx
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         {/* Key Metrics */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {isInsurance ? (
@@ -100,15 +140,9 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                         <p className="text-lg font-semibold text-gray-800">{details.category || 'N/A'}</p>
                                     </div>
                                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Cover Amount</p>
-                                        <p className="text-lg font-semibold text-gray-800">
-                                            KES {(details.cover_amount || 0).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Premium</p>
                                         <p className="text-lg font-semibold text-gray-800">
-                                            KES {(details.indicative_premium || 0).toLocaleString()} / {details.premium_frequency || 'month'}
+                                            KES {(activeDetails.indicative_premium || 0).toLocaleString()} / {activeDetails.premium_frequency || 'month'}
                                         </p>
                                     </div>
                                 </>
@@ -119,28 +153,55 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                         <p className="text-lg font-semibold text-gray-800">{details.fund_type || 'N/A'}</p>
                                     </div>
                                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Min Investment</p>
-                                        <p className="text-lg font-semibold text-gray-800">
-                                            KES {(details.minimum_investment || 0).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return (1yr)</p>
-                                        <p className="text-lg font-semibold text-gray-800">{(details.return_1y || 0).toFixed(2)}%</p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return (3yr)</p>
-                                        <p className="text-lg font-semibold text-gray-800">{(details.return_3y || 0).toFixed(2)}%</p>
+                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Risk Level</p>
+                                        <p className="text-lg font-semibold text-gray-800">{activeDetails.risk_level || 'N/A'}</p>
                                     </div>
                                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Mgmt Fee</p>
-                                        <p className="text-lg font-semibold text-gray-800">{(details.management_fee || 0).toFixed(2)}%</p>
+                                        <p className="text-lg font-semibold text-gray-800">{(activeDetails.management_fee || 0).toFixed(2)}%</p>
                                     </div>
                                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Custodian</p>
                                         <p className="text-lg font-semibold text-gray-800 text-sm">{details.custodian || 'N/A'}</p>
                                     </div>
                                 </>
+                            )}
+
+                            {/* Topline figures -- admin-defined, as many as this option has */}
+                            {activeDetails.topline_figures && activeDetails.topline_figures.length > 0 ? (
+                                activeDetails.topline_figures.map((f, idx) => (
+                                    <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">{f.label}</p>
+                                        <p className="text-lg font-semibold text-gray-800">{formatFigureValue(f)}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                // Legacy fallback -- pre-dates topline_figures entirely
+                                isInsurance ? (
+                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Cover Amount</p>
+                                        <p className="text-lg font-semibold text-gray-800">
+                                            KES {(activeDetails.cover_amount || 0).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Min Investment</p>
+                                            <p className="text-lg font-semibold text-gray-800">
+                                                KES {(activeDetails.minimum_investment || 0).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return (1yr)</p>
+                                            <p className="text-lg font-semibold text-gray-800">{(activeDetails.return_1y || 0).toFixed(2)}%</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return (3yr)</p>
+                                            <p className="text-lg font-semibold text-gray-800">{(activeDetails.return_3y || 0).toFixed(2)}%</p>
+                                        </div>
+                                    </>
+                                )
                             )}
                         </div>
 
