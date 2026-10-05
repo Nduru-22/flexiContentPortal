@@ -163,7 +163,7 @@ window.api = {
         },
 
         async delete(pid) {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/delete`, {
+            return window.api.call(`${window.APP_CONFIG.API_BASE}/deleteprod`, {
                 method: 'DELETE',
                 headers: {
                 'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
