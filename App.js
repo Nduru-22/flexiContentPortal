@@ -69,6 +69,8 @@ function App() {
             setCurrentView('deeplinks');
         } else if (section === 'plans') {
             setCurrentView('catalog-partners');
+        } else if (section === 'challenges') {
+            setCurrentView('challenges');
         }
     };
 
@@ -107,17 +109,24 @@ function App() {
         { id: 'catalog-banners', label: '🎠 Banners', component: window.CatalogBanners }
     ];
 
+    // Define challenges navigation items
+    const challengesNavItems = [
+        { id: 'challenges', label: '🏆 Challenges', component: window.Challenges }
+    ];
+
     const sectionNavItems = {
         shop: shopNavItems,
         content: contentNavItems,
         deeplinks: deeplinksNavItems,
-        plans: plansNavItems
+        plans: plansNavItems,
+        challenges: challengesNavItems
     };
     const sectionDefaultComponent = {
         shop: Dashboard,
         content: Content,
         deeplinks: DeepLinks,
-        plans: window.CatalogPartners
+        plans: window.CatalogPartners,
+        challenges: window.Challenges
     };
 
     const currentNavItems = sectionNavItems[currentSection];
@@ -177,6 +186,16 @@ function App() {
                                     }`}
                                 >
                                     🛡️ Plans
+                                </button>
+                                <button
+                                    onClick={() => handleSectionChange('challenges')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'challenges'
+                                            ? 'bg-white text-amber-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    🏆 Challenges
                                 </button>
                             </div>
                         </div>
