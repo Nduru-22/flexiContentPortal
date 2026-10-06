@@ -16,7 +16,8 @@ window.Merchants = function Merchants() {
         setLoading(true);
         const result = await window.api.merchants.getAll();
         if (result.status === '4000') {
-            setMerchants(result.detail || []);
+            // get_all_merchants wraps the list under "merchants", not "detail".
+            setMerchants(result.merchants || []);
         }
         setLoading(false);
     };
@@ -46,10 +47,10 @@ window.Merchants = function Merchants() {
     const filteredMerchants = merchants.filter(m => {
         const searchLower = searchTerm.toLowerCase();
         return (
-            m.merchant_name?.toLowerCase().includes(searchLower) ||
-            m.merchant_email?.toLowerCase().includes(searchLower) ||
-            m.merchant_phone?.toString().includes(searchTerm) ||
-            m.business_name?.toLowerCase().includes(searchLower)
+            m.name?.toLowerCase().includes(searchLower) ||
+            m.email?.toLowerCase().includes(searchLower) ||
+            m.phone?.toString().includes(searchTerm) ||
+            m.description?.toLowerCase().includes(searchLower)
         );
     });
 
@@ -114,36 +115,36 @@ window.Merchants = function Merchants() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredMerchants.map(merchant => (
-                            <div key={merchant.merchant_id} className="bg-white rounded-xl shadow-md p-6 card-hover">
+                            <div key={merchant.id} className="bg-white rounded-xl shadow-md p-6 card-hover">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex-1">
                                         <h3 className="font-bold text-lg text-gray-800 mb-1">
-                                            {merchant.merchant_name}
+                                            {merchant.name}
                                         </h3>
                                         <p className="text-sm text-gray-600">
-                                            {merchant.business_name || 'No business name'}
+                                            {merchant.description || 'No description'}
                                         </p>
                                     </div>
                                     <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
                                         <window.Icons.Users />
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-2 mb-4 text-sm">
                                     <div className="flex items-center gap-2 text-gray-600">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
-                                        {merchant.merchant_email || 'No email'}
+                                        {merchant.email || 'No email'}
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-600">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                         </svg>
-                                        {merchant.merchant_phone || 'No phone'}
+                                        {merchant.phone || 'No phone'}
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex gap-2 pt-4 border-t">
                                     <button
                                         onClick={() => handleEdit(merchant)}
@@ -153,7 +154,7 @@ window.Merchants = function Merchants() {
                                         Edit
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(merchant.merchant_id, merchant.merchant_name)}
+                                        onClick={() => handleDelete(merchant.id, merchant.name)}
                                         className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
                                     >
                                         <window.Icons.Trash />

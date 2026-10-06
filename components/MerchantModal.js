@@ -3,18 +3,28 @@ const { useState } = React;
 
 window.MerchantModal = function MerchantModal({ merchant, onClose, onSave }) {
     const [formData, setFormData] = useState({
-        merchant_name: merchant?.merchant_name || '',
-        merchant_email: merchant?.merchant_email || '',
-        merchant_phone: merchant?.merchant_phone || '',
-        business_name: merchant?.business_name || '',
-        business_address: merchant?.business_address || '',
-        business_category: merchant?.business_category || '',
-        bank_account: merchant?.bank_account || '',
-        mpesa_number: merchant?.mpesa_number || ''
+        name: merchant?.name || '',
+        email: merchant?.email || '',
+        phone: merchant?.phone || '',
+        address: merchant?.address || '',
+        status: merchant?.status || 'active',
+        description: merchant?.description || '',
+        logo_link: merchant?.logo_link || '',
+        website: merchant?.website || '',
+        contact_person: merchant?.contact_person || '',
+        // Payment info
+        paybill: merchant?.paybill || '',
+        till: merchant?.till || '',
+        account_number: merchant?.account_number || '',
+        send_money: merchant?.send_money || ''
     });
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -23,9 +33,20 @@ window.MerchantModal = function MerchantModal({ merchant, onClose, onSave }) {
 
         let result;
         if (merchant) {
-            result = await window.api.merchants.update(merchant.merchant_id, formData);
+            // update_merchant applies setattr() for any key matching a real
+            // column name -- send those names directly.
+            result = await window.api.merchants.update(merchant.id, formData);
         } else {
-            result = await window.api.merchants.create(formData);
+            // newMerchant's route reads req["join_date"] (required, no
+            // default) and renames contact_person/account_number to the
+            // shorter contact/account on the way in -- match that here.
+            const { contact_person, account_number, ...rest } = formData;
+            result = await window.api.merchants.create({
+                ...rest,
+                contact: contact_person,
+                account: account_number,
+                join_date: new Date().toISOString().slice(0, 10)
+            });
         }
 
         if (result.status === '4000') {
@@ -37,6 +58,9 @@ window.MerchantModal = function MerchantModal({ merchant, onClose, onSave }) {
 
         setSaving(false);
     };
+
+    const inputCls = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none";
+    const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 fade-in">
@@ -53,104 +77,137 @@ window.MerchantModal = function MerchantModal({ merchant, onClose, onSave }) {
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Merchant Name *
-                            </label>
+                            <label className={labelCls}>Merchant / Business Name *</label>
                             <input
                                 type="text"
-                                value={formData.merchant_name}
-                                onChange={(e) => setFormData({...formData, merchant_name: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.name}
+                                onChange={(e) => handleChange('name', e.target.value)}
+                                className={inputCls}
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Email *
-                            </label>
+                            <label className={labelCls}>Email *</label>
                             <input
                                 type="email"
-                                value={formData.merchant_email}
-                                onChange={(e) => setFormData({...formData, merchant_email: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.email}
+                                onChange={(e) => handleChange('email', e.target.value)}
+                                className={inputCls}
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Phone Number *
-                            </label>
+                            <label className={labelCls}>Phone Number *</label>
                             <input
                                 type="tel"
-                                value={formData.merchant_phone}
-                                onChange={(e) => setFormData({...formData, merchant_phone: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.phone}
+                                onChange={(e) => handleChange('phone', e.target.value)}
+                                className={inputCls}
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Business Name
-                            </label>
+                            <label className={labelCls}>Contact Person</label>
                             <input
                                 type="text"
-                                value={formData.business_name}
-                                onChange={(e) => setFormData({...formData, business_name: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.contact_person}
+                                onChange={(e) => handleChange('contact_person', e.target.value)}
+                                className={inputCls}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Business Category
-                            </label>
+                            <label className={labelCls}>Website</label>
                             <input
                                 type="text"
-                                value={formData.business_category}
-                                onChange={(e) => setFormData({...formData, business_category: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="e.g., Retail, Food & Beverage"
+                                value={formData.website}
+                                onChange={(e) => handleChange('website', e.target.value)}
+                                className={inputCls}
+                                placeholder="https://..."
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                M-Pesa Number
-                            </label>
+                            <label className={labelCls}>Logo URL</label>
                             <input
-                                type="tel"
-                                value={formData.mpesa_number}
-                                onChange={(e) => setFormData({...formData, mpesa_number: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                type="text"
+                                value={formData.logo_link}
+                                onChange={(e) => handleChange('logo_link', e.target.value)}
+                                className={inputCls}
+                                placeholder="https://..."
                             />
                         </div>
+
+                        {merchant && (
+                            <div>
+                                <label className={labelCls}>Status</label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => handleChange('status', e.target.value)}
+                                    className={inputCls}
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        )}
 
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Business Address
-                            </label>
+                            <label className={labelCls}>Address</label>
                             <textarea
-                                value={formData.business_address}
-                                onChange={(e) => setFormData({...formData, business_address: e.target.value})}
+                                value={formData.address}
+                                onChange={(e) => handleChange('address', e.target.value)}
                                 rows={2}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                className={inputCls}
                             />
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Bank Account
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.bank_account}
-                                onChange={(e) => setFormData({...formData, bank_account: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Bank name and account number"
+                            <label className={labelCls}>Description</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => handleChange('description', e.target.value)}
+                                rows={2}
+                                className={inputCls}
+                                placeholder="What this merchant sells..."
                             />
+                        </div>
+                    </div>
+
+                    {/* Payment Details */}
+                    <div className="border-l-4 border-amber-400 bg-amber-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-800 mb-3">Payment Info</h4>
+                        <p className="text-xs text-gray-600 mb-3">
+                            Where this merchant should be paid out. Not automated yet — stored for reference until settlement routing is built.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label className={labelCls}>Paybill Number</label>
+                                <input type="text" value={formData.paybill}
+                                    onChange={(e) => handleChange('paybill', e.target.value)}
+                                    className={inputCls} placeholder="e.g., 123456" />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Account Number</label>
+                                <input type="text" value={formData.account_number}
+                                    onChange={(e) => handleChange('account_number', e.target.value)}
+                                    className={inputCls} placeholder="Paybill account number" />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Till Number</label>
+                                <input type="text" value={formData.till}
+                                    onChange={(e) => handleChange('till', e.target.value)}
+                                    className={inputCls} placeholder="e.g., 654321" />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Send Money (Phone Number)</label>
+                                <input type="text" value={formData.send_money}
+                                    onChange={(e) => handleChange('send_money', e.target.value)}
+                                    className={inputCls} placeholder="e.g., 0712345678" />
+                            </div>
                         </div>
                     </div>
 
