@@ -139,12 +139,19 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                         <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Category</p>
                                         <p className="text-lg font-semibold text-gray-800">{details.category || 'N/A'}</p>
                                     </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Premium</p>
-                                        <p className="text-lg font-semibold text-gray-800">
-                                            KES {(activeDetails.indicative_premium || 0).toLocaleString()} / {activeDetails.premium_frequency || 'month'}
-                                        </p>
-                                    </div>
+                                    {activeDetails.requires_quote ? (
+                                        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                                            <p className="text-xs text-indigo-600 uppercase tracking-wide mb-1">Pricing</p>
+                                            <p className="text-lg font-semibold text-indigo-700">Personalized Quote</p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Premium</p>
+                                            <p className="text-lg font-semibold text-gray-800">
+                                                KES {(activeDetails.indicative_premium || 0).toLocaleString()} / {activeDetails.premium_frequency || 'month'}
+                                            </p>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <>
@@ -167,8 +174,10 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                 </>
                             )}
 
-                            {/* Topline figures -- admin-defined, as many as this option has */}
-                            {activeDetails.topline_figures && activeDetails.topline_figures.length > 0 ? (
+                            {/* Topline figures -- admin-defined, as many as this option has.
+                                Skipped entirely for quote-only products: there's no fixed
+                                pricing/cover data to show here, the CTA below covers it. */}
+                            {isInsurance && activeDetails.requires_quote ? null : activeDetails.topline_figures && activeDetails.topline_figures.length > 0 ? (
                                 activeDetails.topline_figures.map((f, idx) => (
                                     <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">{f.label}</p>
@@ -273,7 +282,7 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                             Close
                         </button>
                         <button className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition font-medium">
-                            {isInsurance ? 'Apply Now' : 'Invest Now'}
+                            {isInsurance ? (activeDetails.requires_quote ? 'Get a Personalized Quote' : 'Apply Now') : 'Invest Now'}
                         </button>
                     </div>
                 </div>

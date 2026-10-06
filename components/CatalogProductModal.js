@@ -23,6 +23,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         category: existingDetails.category || 'health',
         indicative_premium: existingDetails.indicative_premium ?? '',
         premium_frequency: existingDetails.premium_frequency || 'monthly',
+        requires_quote: existingDetails.requires_quote || false,
 
         // investment details
         fund_type: existingDetails.fund_type || 'mmf',
@@ -69,6 +70,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             label: v.label || '',
             premium_frequency: v.details?.premium_frequency || 'monthly',
             indicative_premium: v.details?.indicative_premium ?? '',
+            requires_quote: v.details?.requires_quote || false,
             risk_level: v.details?.risk_level || 'low',
             management_fee: v.details?.management_fee ?? '',
             figures: (v.details?.topline_figures && v.details.topline_figures.length)
@@ -109,6 +111,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             label: '',
             premium_frequency: 'monthly',
             indicative_premium: '',
+            requires_quote: false,
             risk_level: 'low',
             management_fee: '',
             figures: [{ label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }]
@@ -150,9 +153,10 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         if (formData.vertical === 'insurance') {
             return {
                 category: formData.category,
-                indicative_premium: formData.indicative_premium === '' ? null : parseFloat(formData.indicative_premium),
+                indicative_premium: formData.requires_quote ? null : (formData.indicative_premium === '' ? null : parseFloat(formData.indicative_premium)),
                 premium_frequency: formData.premium_frequency,
-                topline_figures: figures,
+                topline_figures: formData.requires_quote ? [] : figures,
+                requires_quote: formData.requires_quote,
                 key_features: features
             };
         }
@@ -173,8 +177,9 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         if (formData.vertical === 'insurance') {
             return {
                 premium_frequency: v.premium_frequency,
-                indicative_premium: v.indicative_premium === '' ? null : parseFloat(v.indicative_premium),
-                topline_figures: figures
+                indicative_premium: v.requires_quote ? null : (v.indicative_premium === '' ? null : parseFloat(v.indicative_premium)),
+                topline_figures: v.requires_quote ? [] : figures,
+                requires_quote: v.requires_quote
             };
         }
         return {
@@ -499,18 +504,36 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className={labelCls}>Indicative Premium (KES)</label>
-                                    <input type="number" step="0.01" value={formData.indicative_premium}
-                                        onChange={(e) => handleChange('indicative_premium', e.target.value)} className={inputCls} />
-                                </div>
+                                {!formData.requires_quote && (
+                                    <div>
+                                        <label className={labelCls}>Indicative Premium (KES)</label>
+                                        <input type="number" step="0.01" value={formData.indicative_premium}
+                                            onChange={(e) => handleChange('indicative_premium', e.target.value)} className={inputCls} />
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <label className={labelCls}>
-                                    Topline Figures <span className="text-xs text-gray-400">(the big numbers shown on the product page — add as many as this product actually has: Cancer Cover, Dermatology Cover, Last Expense Cover, whatever applies)</span>
+                            <div className="mb-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.requires_quote}
+                                        onChange={(e) => handleChange('requires_quote', e.target.checked)}
+                                        className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">Requires a personalized quote (no fixed pricing)</span>
                                 </label>
-                                {renderFigures(toplineFigures, updateFigure, addFigure, removeFigure)}
+                                <p className="text-xs text-gray-500 mt-1 ml-6">
+                                    For products like Drive Flexi where the customer must get a quote from an agent instead of seeing a fixed premium/cover. Hides the premium and topline figures below and shows a "Get a Personalized Quote" call to action on the storefront instead.
+                                </p>
                             </div>
+                            {!formData.requires_quote && (
+                                <div>
+                                    <label className={labelCls}>
+                                        Topline Figures <span className="text-xs text-gray-400">(the big numbers shown on the product page — add as many as this product actually has: Cancer Cover, Dermatology Cover, Last Expense Cover, whatever applies)</span>
+                                    </label>
+                                    {renderFigures(toplineFigures, updateFigure, addFigure, removeFigure)}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="border-t pt-5">
@@ -652,11 +675,13 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div>
-                                                    <label className={labelCls}>Indicative Premium (KES)</label>
-                                                    <input type="number" step="0.01" value={v.indicative_premium}
-                                                        onChange={(e) => updateVariant(v._key, 'indicative_premium', e.target.value)} className={inputCls} />
-                                                </div>
+                                                {!v.requires_quote && (
+                                                    <div>
+                                                        <label className={labelCls}>Indicative Premium (KES)</label>
+                                                        <input type="number" step="0.01" value={v.indicative_premium}
+                                                            onChange={(e) => updateVariant(v._key, 'indicative_premium', e.target.value)} className={inputCls} />
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -680,15 +705,29 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                             </div>
                                         )}
 
-                                        <div>
-                                            <label className={labelCls}>Topline Figures for this option</label>
-                                            {renderFigures(
-                                                v.figures,
-                                                (idx, field, value) => updateVariantFigure(v._key, idx, field, value),
-                                                () => addVariantFigure(v._key),
-                                                (idx) => removeVariantFigure(v._key, idx)
-                                            )}
-                                        </div>
+                                        {formData.vertical === 'insurance' && (
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={v.requires_quote}
+                                                    onChange={(e) => updateVariant(v._key, 'requires_quote', e.target.checked)}
+                                                    className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">Requires a personalized quote for this option</span>
+                                            </label>
+                                        )}
+
+                                        {!(formData.vertical === 'insurance' && v.requires_quote) && (
+                                            <div>
+                                                <label className={labelCls}>Topline Figures for this option</label>
+                                                {renderFigures(
+                                                    v.figures,
+                                                    (idx, field, value) => updateVariantFigure(v._key, idx, field, value),
+                                                    () => addVariantFigure(v._key),
+                                                    (idx) => removeVariantFigure(v._key, idx)
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                                 {variants.length === 0 && (
