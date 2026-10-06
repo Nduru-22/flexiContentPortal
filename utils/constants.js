@@ -207,3 +207,25 @@ window.BANNER_VERTICALS = [
     { value: 'insurance', label: 'Insurance only' },
     { value: 'investment', label: 'Investment only' }
 ];
+
+// Challenges configuration (loaded from APP_CONFIG.AUTH_BASE)
+
+window.CHALLENGE_TYPES = [
+    { value: 'savings', label: 'Savings' },
+    { value: 'spending_limit', label: 'Spending Limit' },
+    { value: 'investment', label: 'Investment' }
+];
+
+window.CHALLENGE_PERIODS = [
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' }
+];
+
+// Same till/paybill split used for Partner payment info -- reused here for
+// a challenge's optional payout destination (e.g. the investment company an
+// influencer-partnered savings challenge routes to).
+window.CHALLENGE_PAYOUT_METHODS = [
+    { value: 'paybill', label: 'Paybill' },
+    { value: 'till', label: 'Till Number' }
+];
