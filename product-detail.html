@@ -236,7 +236,32 @@
             }
 
             // Main metrics
-            if (isInsurance) {
+            const quoteOnly = isInsurance && !!activeDetails.requires_quote;
+            if (quoteOnly) {
+                html += `
+                <section class="bg-surface rounded-card p-8 custom-shadow border border-divider/10">
+                    <div class="space-y-6">
+                        <div class="space-y-1">
+                            <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">PRICING</p>
+                            <p class="font-display text-display text-primary">Personalized Quote</p>
+                        </div>
+                        <div class="flex items-center gap-3 pt-6 border-t border-divider/20">
+                            <div class="bg-success/10 text-success p-2 rounded-full">
+                                <span class="material-symbols-outlined text-[20px]">support_agent</span>
+                            </div>
+                            <span class="font-body-md text-body-md text-on-surface">Get a quote tailored to you from an agent</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+                    <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
+                        <p class="font-label-md text-label-md text-text-hint mb-1">Category</p>
+                        <p class="font-h4 text-h4 text-primary">${details.category || 'N/A'}</p>
+                    </div>
+                </section>
+                `;
+            } else if (isInsurance) {
                 const heroLabel = heroFigure ? heroFigure.label.toUpperCase() : 'COVER AMOUNT';
                 const heroValue = heroFigure ? formatFigureValue(heroFigure) : `KES ${(activeDetails.cover_amount || 0).toLocaleString()}`;
 
@@ -421,14 +446,19 @@
             <div class="fixed bottom-0 left-0 w-full bg-surface border-t border-divider/20 px-6 py-4 z-50">
                 <div class="max-w-[1140px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="hidden sm:block">
+                        ${quoteOnly ? `
+                        <p class="font-overline text-overline text-text-hint uppercase tracking-widest">PRICING</p>
+                        <p class="font-h3 text-h3 text-primary">Personalized Quote</p>
+                        ` : `
                         <p class="font-overline text-overline text-text-hint uppercase tracking-widest">${isInsurance ? 'ESTIMATED PREMIUM' : 'MINIMUM INVESTMENT'}</p>
                         <p class="font-h3 text-h3 text-primary">
                             KES ${isInsurance ? (activeDetails.indicative_premium || 0).toLocaleString() : (activeDetails.minimum_investment || 0).toLocaleString()}
                             ${isInsurance ? `<span class="font-body-sm text-body-sm text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'mo'}</span>` : ''}
                         </p>
+                        `}
                     </div>
                     <button class="w-full sm:w-auto px-12 py-4 bg-secondary-container text-on-secondary-container font-button text-button rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-secondary/20">
-                        ${isInsurance ? 'Apply Now' : 'Invest Now'}
+                        ${isInsurance ? (quoteOnly ? 'Get a Personalized Quote' : 'Apply Now') : 'Invest Now'}
                     </button>
                 </div>
             </div>
