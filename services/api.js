@@ -5,13 +5,13 @@ window.api = {
         console.log("=== API CALL START ===");
         console.log("Endpoint:", endpoint);
         console.log("Options (before headers merge):", JSON.parse(JSON.stringify(options)));
-    
-        const token = localStorage.getItem(window.STORAGE_KEYS.TOKEN);
-        console.log("Token found?", token ? "YES" : "NO");
-    
+
+        // Single-user admin portal -- every call authenticates with this
+        // fixed Basic Auth credential rather than a token from a login
+        // call, so nothing here depends on /adminlogin ever succeeding.
         const headers = {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
             ...options.headers
         };
     
@@ -65,43 +65,6 @@ window.api = {
                 message: 'Network error occurred',
                 detail: error.message
             };
-        }
-    },
-
-
-    // Authentication APIs
-    auth: {
-        async login(username, password) {
-            return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/adminlogin`, {
-                method: 'POST',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                'Content-Type': 'application/json',
-            },
-                body: JSON.stringify({ username, password })
-            });
-        },
-
-        async logout() {
-            const token = localStorage.getItem(window.STORAGE_KEYS.TOKEN);
-            return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/logout`, {
-                method: 'POST',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                'Content-Type': 'application/json',
-            },
-                body: JSON.stringify({ token })
-            });
-        },
-
-        async verify() {
-            return window.api.call(`${window.APP_CONFIG.AUTH_BASE}/verify`, {
-                method: 'POST',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                'Content-Type': 'application/json',
-            },
-            });
         }
     },
 

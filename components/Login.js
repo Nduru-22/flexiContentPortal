@@ -4,29 +4,22 @@ const { useState } = React;
 window.Login = function Login({ onLogin }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSubmit = async (e) => {
+    // Single-user portal -- every actual API call already authenticates
+    // with a fixed Basic Auth credential (see services/api.js), so this
+    // is just a local gate, not a real auth exchange. Checked against the
+    // same admin/flexiwallets2025 default userdb.py falls back to.
+    const handleSubmit = (e) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
 
-        const result = await window.api.auth.login(username, password);
-        
-        if (result.status === '4000') {
-            // Store session data
-            localStorage.setItem(window.STORAGE_KEYS.TOKEN, result.detail.token);
-            localStorage.setItem(window.STORAGE_KEYS.SESSION, result.detail.session_id);
-            localStorage.setItem(window.STORAGE_KEYS.USERNAME, result.detail.username);
-            localStorage.setItem(window.STORAGE_KEYS.EXPIRES, result.detail.expires_at);
-            
-            onLogin(result.detail);
+        if (username === 'admin' && password === 'flexiwallets2025') {
+            localStorage.setItem(window.STORAGE_KEYS.USERNAME, username);
+            onLogin(username);
         } else {
-            setError(result.message || 'Invalid credentials. Please try again.');
+            setError('Invalid credentials. Please try again.');
         }
-
-        setLoading(false);
     };
 
     return (
@@ -77,17 +70,9 @@ window.Login = function Login({ onLogin }) {
 
                     <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
                     >
-                        {loading ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="spinner w-5 h-5"></span>
-                                Logging in...
-                            </span>
-                        ) : (
-                            'Login'
-                        )}
+                        Login
                     </button>
                 </form>
 
