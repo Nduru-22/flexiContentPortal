@@ -12,11 +12,11 @@ function App() {
         lowStockProducts: 0
     });
 
-    // Check for existing session on mount
+    // Check for existing session on mount -- single-user portal, so this
+    // is just a remembered local gate, not a real session (see Login.js).
     useEffect(() => {
-        const token = localStorage.getItem(window.STORAGE_KEYS.TOKEN);
         const username = localStorage.getItem(window.STORAGE_KEYS.USERNAME);
-        if (token && username) {
+        if (username) {
             setUser({ username });
             loadStats();
         }
@@ -39,9 +39,8 @@ function App() {
     };
 
     // Handle logout
-    const handleLogout = async () => {
+    const handleLogout = () => {
         if (confirm('Are you sure you want to logout?')) {
-            await window.api.auth.logout();
             localStorage.clear();
             setUser(null);
             setCurrentSection('shop');
