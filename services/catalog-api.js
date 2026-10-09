@@ -87,7 +87,12 @@ window.catalogAPI = {
             });
         },
 
-        async deactivate(productId) {
+        // Really deletes the product when nothing customer-facing
+        // references it; otherwise the backend deactivates it instead and
+        // says so in the response (detail.deactivated) -- see
+        // db_marketplace.py's deleteProduct() for why a hard delete isn't
+        // always safe.
+        async delete(productId) {
             return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/product?id=${productId}`, {
                 method: 'DELETE',
                 headers: window.catalogAPI._authHeaders()
