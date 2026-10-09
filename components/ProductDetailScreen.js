@@ -7,6 +7,8 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedIdx, setSelectedIdx] = useState(0);
+    const [selectedBandIdx, setSelectedBandIdx] = useState(null);
+    const [heroIdx, setHeroIdx] = useState(0);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -23,6 +25,26 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
 
         if (productId) fetchProduct();
     }, [productId]);
+
+    // Age band is a choice tied to whichever option is selected -- a new
+    // option may have different bands entirely, so don't carry a stale
+    // selection across. Never pre-selected: the buyer may not be the one
+    // the cover is for (a man buying for his mother or wife), so the app
+    // can't guess an age band for them.
+    useEffect(() => {
+        setSelectedBandIdx(null);
+    }, [selectedIdx]);
+
+    // Hero image carousel -- auto-advances through every image for this
+    // product, smooth crossfade rather than an abrupt swap.
+    const heroImages = product?.media || [];
+    useEffect(() => {
+        if (heroImages.length <= 1) return;
+        const timer = setInterval(() => {
+            setHeroIdx(i => (i + 1) % heroImages.length);
+        }, 4000);
+        return () => clearInterval(timer);
+    }, [heroImages.length]);
 
     if (loading) {
         return (
@@ -63,6 +85,18 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
     ];
     const activeDetails = options[selectedIdx]?.details || details;
 
+    // Age-banded pricing (e.g. Malkia Cover) -- only for insurance, and only
+    // when this option actually has bands. Never pre-selected (see the
+    // reset effect above), so the headline price shows a range until the
+    // buyer picks one.
+    const priceBands = (isInsurance && !activeDetails.requires_quote && activeDetails.price_bands && activeDetails.price_bands.length)
+        ? activeDetails.price_bands
+        : [];
+    const selectedBand = selectedBandIdx !== null ? priceBands[selectedBandIdx] : null;
+    const bandPremiums = priceBands.map(b => b.indicative_premium).filter(v => v !== null && v !== undefined);
+    const minBandPremium = bandPremiums.length ? Math.min(...bandPremiums) : null;
+    const maxBandPremium = bandPremiums.length ? Math.max(...bandPremiums) : null;
+
     const formatFigureValue = (f) => {
         if (f.value === null || f.value === undefined || f.value === '') return 'N/A';
         const num = typeof f.value === 'number' ? f.value.toLocaleString() : f.value;
@@ -99,15 +133,31 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                             </div>
                         )}
 
-                        {/* Hero Image */}
-                        {product.media && product.media.length > 0 && (
-                            <div>
-                                <img
-                                    src={product.media[0].image_url}
-                                    alt="Product hero"
-                                    className="w-full h-64 object-cover rounded-lg border border-gray-200"
-                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                />
+                        {/* Hero Image carousel -- auto-advances, smooth crossfade */}
+                        {heroImages.length > 0 && (
+                            <div className="relative w-full h-64 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                                {heroImages.map((m, idx) => (
+                                    <img
+                                        key={m.id}
+                                        src={m.image_url}
+                                        alt=""
+                                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${idx === heroIdx ? 'opacity-100' : 'opacity-0'}`}
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                ))}
+                                {heroImages.length > 1 && (
+                                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                                        {heroImages.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setHeroIdx(idx)}
+                                                className={`w-2 h-2 rounded-full transition ${idx === heroIdx ? 'bg-white' : 'bg-white/50'}`}
+                                                aria-label={`Image ${idx + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -143,6 +193,18 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                         <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
                                             <p className="text-xs text-indigo-600 uppercase tracking-wide mb-1">Pricing</p>
                                             <p className="text-lg font-semibold text-indigo-700">Personalized Quote</p>
+                                        </div>
+                                    ) : priceBands.length > 0 ? (
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Premium</p>
+                                            <p className="text-lg font-semibold text-gray-800">
+                                                {selectedBand
+                                                    ? `KES ${(selectedBand.indicative_premium || 0).toLocaleString()} / ${activeDetails.premium_frequency || 'year'}`
+                                                    : `KES ${minBandPremium.toLocaleString()} - ${maxBandPremium.toLocaleString()} / ${activeDetails.premium_frequency || 'year'}`}
+                                            </p>
+                                            {!selectedBand && (
+                                                <p className="text-xs text-indigo-600 mt-1">Select your age band below</p>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -213,6 +275,30 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
                                 )
                             )}
                         </div>
+
+                        {/* Age band selector -- never pre-selected; the price above stays
+                            a range until the buyer actually picks one for themselves. */}
+                        {priceBands.length > 0 && (
+                            <div>
+                                <p className="text-xs text-gray-600 uppercase tracking-wide mb-2">Select age band for exact pricing</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {priceBands.map((b, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setSelectedBandIdx(idx)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                                                idx === selectedBandIdx
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {b.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Key Features / What's Covered */}
                         {details.key_features && details.key_features.length > 0 && (
