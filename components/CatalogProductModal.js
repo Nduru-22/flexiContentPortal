@@ -60,6 +60,16 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         return seeded.length ? seeded : [{ label: '', value: '', unit: (product?.vertical || 'insurance') === 'insurance' ? 'KES' : '%' }];
     });
 
+    // Price bands: for covers like Malkia where the premium itself changes
+    // by age band within the same option (cover amount/topline figures stay
+    // fixed -- only price moves). Optional -- indicative_premium above
+    // stays the fallback shown whenever a product/option has no bands.
+    const [priceBands, setPriceBands] = useState(
+        existingDetails.price_bands && existingDetails.price_bands.length
+            ? existingDetails.price_bands.map(b => ({ label: b.label || '', indicative_premium: b.indicative_premium ?? '' }))
+            : []
+    );
+
     // Options (variants) -- e.g. age bands, cover tiers. Each one carries a
     // COMPLETE independent set of details (not a partial override of the
     // product's own details above), including its own topline figures.
@@ -75,7 +85,10 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             management_fee: v.details?.management_fee ?? '',
             figures: (v.details?.topline_figures && v.details.topline_figures.length)
                 ? v.details.topline_figures.map(f => ({ label: f.label || '', value: f.value ?? '', unit: f.unit || '' }))
-                : [{ label: '', value: '', unit: '' }]
+                : [{ label: '', value: '', unit: '' }],
+            priceBands: (v.details?.price_bands && v.details.price_bands.length)
+                ? v.details.price_bands.map(b => ({ label: b.label || '', indicative_premium: b.indicative_premium ?? '' }))
+                : []
         }))
     );
     const [removedVariantIds, setRemovedVariantIds] = useState([]);
@@ -104,6 +117,12 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const addFigure = () => setToplineFigures(prev => [...prev, { label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }]);
     const removeFigure = (index) => setToplineFigures(prev => prev.filter((_, i) => i !== index));
 
+    const updatePriceBand = (index, field, value) => {
+        setPriceBands(prev => prev.map((b, i) => (i === index ? { ...b, [field]: value } : b)));
+    };
+    const addPriceBand = () => setPriceBands(prev => [...prev, { label: '', indicative_premium: '' }]);
+    const removePriceBand = (index) => setPriceBands(prev => prev.filter((_, i) => i !== index));
+
     const addVariant = () => {
         setVariants(prev => [...prev, {
             _key: `new-${Date.now()}-${Math.random()}`,
@@ -114,7 +133,8 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             requires_quote: false,
             risk_level: 'low',
             management_fee: '',
-            figures: [{ label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }]
+            figures: [{ label: '', value: '', unit: formData.vertical === 'insurance' ? 'KES' : '%' }],
+            priceBands: []
         }]);
     };
     const removeVariant = (key) => {
@@ -141,9 +161,29 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             : v)));
     };
 
+    const updateVariantPriceBand = (key, idx, field, value) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, priceBands: v.priceBands.map((b, i) => (i === idx ? { ...b, [field]: value } : b)) }
+            : v)));
+    };
+    const addVariantPriceBand = (key) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, priceBands: [...v.priceBands, { label: '', indicative_premium: '' }] }
+            : v)));
+    };
+    const removeVariantPriceBand = (key, idx) => {
+        setVariants(prev => prev.map(v => (v._key === key
+            ? { ...v, priceBands: v.priceBands.filter((_, i) => i !== idx) }
+            : v)));
+    };
+
     const buildFigures = (figures) => figures
         .filter(f => f.label.trim())
         .map(f => ({ label: f.label.trim(), value: f.value === '' ? null : parseFloat(f.value), unit: f.unit.trim() || null }));
+
+    const buildPriceBands = (bands) => bands
+        .filter(b => b.label.trim())
+        .map(b => ({ label: b.label.trim(), indicative_premium: b.indicative_premium === '' ? null : parseFloat(b.indicative_premium) }));
 
     const buildDetails = () => {
         const features = keyFeatures
@@ -157,6 +197,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 premium_frequency: formData.premium_frequency,
                 topline_figures: formData.requires_quote ? [] : figures,
                 requires_quote: formData.requires_quote,
+                price_bands: formData.requires_quote ? [] : buildPriceBands(priceBands),
                 key_features: features
             };
         }
@@ -179,7 +220,8 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 premium_frequency: v.premium_frequency,
                 indicative_premium: v.requires_quote ? null : (v.indicative_premium === '' ? null : parseFloat(v.indicative_premium)),
                 topline_figures: v.requires_quote ? [] : figures,
-                requires_quote: v.requires_quote
+                requires_quote: v.requires_quote,
+                price_bands: v.requires_quote ? [] : buildPriceBands(v.priceBands)
             };
         }
         return {
@@ -326,6 +368,36 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             ))}
             <button type="button" onClick={add} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
                 + Add figure
+            </button>
+        </div>
+    );
+
+    const renderPriceBands = (bands, update, add, remove) => (
+        <div className="space-y-2">
+            {bands.map((b, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                    <input
+                        type="text"
+                        value={b.label}
+                        onChange={(e) => update(idx, 'label', e.target.value)}
+                        className={inputCls}
+                        placeholder="Age band, e.g. 18-30"
+                    />
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={b.indicative_premium}
+                        onChange={(e) => update(idx, 'indicative_premium', e.target.value)}
+                        className={`${inputCls} w-36 flex-shrink-0`}
+                        placeholder="Premium (KES)"
+                    />
+                    <button type="button" onClick={() => remove(idx)} className="px-1 text-gray-400 hover:text-red-500 flex-shrink-0">
+                        <window.Icons.X />
+                    </button>
+                </div>
+            ))}
+            <button type="button" onClick={add} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                + Add price band
             </button>
         </div>
     );
@@ -527,11 +599,19 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                 </p>
                             </div>
                             {!formData.requires_quote && (
-                                <div>
+                                <div className="mb-4">
                                     <label className={labelCls}>
                                         Topline Figures <span className="text-xs text-gray-400">(the big numbers shown on the product page — add as many as this product actually has: Cancer Cover, Dermatology Cover, Last Expense Cover, whatever applies)</span>
                                     </label>
                                     {renderFigures(toplineFigures, updateFigure, addFigure, removeFigure)}
+                                </div>
+                            )}
+                            {!formData.requires_quote && (
+                                <div>
+                                    <label className={labelCls}>
+                                        Price by age band <span className="text-xs text-gray-400">(optional — only needed when this exact option's premium changes by age, like Malkia Cover. Leave empty to just use the Indicative Premium above for everyone)</span>
+                                    </label>
+                                    {renderPriceBands(priceBands, updatePriceBand, addPriceBand, removePriceBand)}
                                 </div>
                             )}
                         </div>
@@ -725,6 +805,20 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                     (idx, field, value) => updateVariantFigure(v._key, idx, field, value),
                                                     () => addVariantFigure(v._key),
                                                     (idx) => removeVariantFigure(v._key, idx)
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {formData.vertical === 'insurance' && !v.requires_quote && (
+                                            <div>
+                                                <label className={labelCls}>
+                                                    Price by age band <span className="text-xs text-gray-400">(optional, same as above — leave empty to just use this option's Indicative Premium for everyone)</span>
+                                                </label>
+                                                {renderPriceBands(
+                                                    v.priceBands,
+                                                    (idx, field, value) => updateVariantPriceBand(v._key, idx, field, value),
+                                                    () => addVariantPriceBand(v._key),
+                                                    (idx) => removeVariantPriceBand(v._key, idx)
                                                 )}
                                             </div>
                                         )}

@@ -133,6 +133,14 @@
         const getterBase = 'https://api.zeegoapp.com/getter/api/v1';
 
         let currentProduct = null;
+        let currentSelectedIdx = 0;
+        // Age band is never pre-selected -- the buyer may not be the one the
+        // cover is for (e.g. a man buying for his mother or wife), so the
+        // app can't guess which band applies. Reset whenever the option
+        // changes, since a different option can have entirely different bands.
+        let currentBandIdx = null;
+        let heroIdx = 0;
+        let heroCarouselTimer = null;
 
         if (!productId) {
             document.getElementById('app').innerHTML = '<div class="text-center py-20"><p class="text-red-600 text-lg">Product ID not provided</p></div>';
@@ -156,7 +164,39 @@
         // Called from the options switcher's onclick -- re-renders with the
         // already-fetched product, just a different selected option.
         function selectOption(idx) {
+            currentSelectedIdx = idx;
+            currentBandIdx = null;
             if (currentProduct) renderProduct(currentProduct, idx);
+        }
+
+        // Called from the age band pills' onclick -- same product and
+        // option, just records which band's premium to show.
+        function selectBand(idx) {
+            currentBandIdx = idx;
+            if (currentProduct) renderProduct(currentProduct, currentSelectedIdx);
+        }
+
+        // Hero image carousel -- toggles opacity/dot classes directly
+        // instead of a full re-render, so the auto-advance timer doesn't
+        // interrupt scroll position or re-run the rest of the page.
+        function setHeroImage(idx) {
+            heroIdx = idx;
+            document.querySelectorAll('.hero-slide').forEach((el, i) => {
+                el.style.opacity = i === idx ? '1' : '0';
+            });
+            document.querySelectorAll('.hero-dot').forEach((el, i) => {
+                el.classList.toggle('bg-white', i === idx);
+                el.classList.toggle('bg-white/50', i !== idx);
+            });
+        }
+
+        function startHeroCarousel(count) {
+            if (heroCarouselTimer) clearInterval(heroCarouselTimer);
+            heroCarouselTimer = null;
+            if (count <= 1) return;
+            heroCarouselTimer = setInterval(() => {
+                setHeroImage((heroIdx + 1) % count);
+            }, 4000);
         }
 
         function formatFigureValue(f) {
@@ -173,7 +213,7 @@
             selectedIdx = selectedIdx || 0;
             const details = product.details || {};
             const isInsurance = product.vertical === 'insurance';
-            const heroImage = product.media && product.media.length > 0 ? product.media[0].image_url : null;
+            const heroImages = product.media || [];
 
             // "Options" (variants) -- the product's own details is always option 1
             // (the default shown on landing), additional options come from
@@ -187,6 +227,21 @@
             const figures = (activeDetails.topline_figures && activeDetails.topline_figures.length > 0) ? activeDetails.topline_figures : null;
             const heroFigure = figures ? figures[0] : null;
             const restFigures = figures ? figures.slice(1) : [];
+
+            // Age-banded pricing (e.g. Malkia Cover) -- cover amount/topline
+            // figures stay fixed, only the premium changes by band.
+            const priceBands = (isInsurance && !activeDetails.requires_quote && activeDetails.price_bands && activeDetails.price_bands.length)
+                ? activeDetails.price_bands
+                : [];
+            const selectedBand = currentBandIdx !== null ? priceBands[currentBandIdx] : null;
+            const bandPremiums = priceBands.map(b => b.indicative_premium).filter(v => v !== null && v !== undefined);
+            const minBandPremium = bandPremiums.length ? Math.min(...bandPremiums) : null;
+            const maxBandPremium = bandPremiums.length ? Math.max(...bandPremiums) : null;
+            const premiumDisplay = selectedBand
+                ? `KES ${(selectedBand.indicative_premium || 0).toLocaleString()}`
+                : priceBands.length > 0
+                    ? `KES ${minBandPremium.toLocaleString()} - ${maxBandPremium.toLocaleString()}`
+                    : `KES ${(activeDetails.indicative_premium || 0).toLocaleString()}`;
 
             let html = `
             <!-- Header Section -->
@@ -210,13 +265,26 @@
             <main class="max-w-[1140px] mx-auto px-4 md:px-gutter mt-8 space-y-stack-lg">
             `;
 
-            // Hero image section
-            if (heroImage) {
+            // Hero image carousel -- auto-advances, smooth crossfade
+            if (heroImages.length > 0) {
                 html += `
-                <section class="bg-surface rounded-card overflow-hidden custom-shadow border border-divider/10">
-                    <img src="${heroImage}" alt="${product.title}" class="w-full h-64 object-cover" />
-                </section>
+                <section class="relative bg-surface rounded-card overflow-hidden custom-shadow border border-divider/10 h-64">
                 `;
+                heroImages.forEach((m, idx) => {
+                    html += `
+                    <img src="${m.image_url}" alt="${product.title}" class="hero-slide absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out" style="opacity: ${idx === 0 ? '1' : '0'};" />
+                    `;
+                });
+                if (heroImages.length > 1) {
+                    html += `<div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">`;
+                    heroImages.forEach((_, idx) => {
+                        html += `
+                        <button type="button" onclick="setHeroImage(${idx})" class="hero-dot w-2 h-2 rounded-full transition ${idx === 0 ? 'bg-white' : 'bg-white/50'}" aria-label="Image ${idx + 1}"></button>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+                html += `</section>`;
             }
 
             // Options switcher -- only shown when there's more than one option
@@ -275,7 +343,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-divider/20">
                             <div class="space-y-1">
                                 <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">INDICATIVE PREMIUM</p>
-                                <p class="font-amount-sm text-amount-sm text-secondary">KES ${(activeDetails.indicative_premium || 0).toLocaleString()} <span class="text-label-md font-label-md text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'month'}</span></p>
+                                <p class="font-amount-sm text-amount-sm text-secondary">${premiumDisplay} <span class="text-label-md font-label-md text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'month'}</span></p>
+                                ${priceBands.length > 0 && !selectedBand ? `<p class="font-caption text-caption text-secondary">Select your age band below</p>` : ''}
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="bg-success/10 text-success p-2 rounded-full">
@@ -294,7 +363,7 @@
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Premium</p>
-                        <p class="font-h4 text-h4 text-primary">KES ${(activeDetails.indicative_premium || 0).toLocaleString()}</p>
+                        <p class="font-h4 text-h4 text-primary">${premiumDisplay}</p>
                     </div>
                     <div class="bg-surface p-card-padding rounded-card border border-divider/10 custom-shadow">
                         <p class="font-label-md text-label-md text-text-hint mb-1">Frequency</p>
@@ -314,6 +383,30 @@
                         `;
                     });
                     html += `</section>`;
+                }
+
+                // Age band selector -- never pre-selected; the price above
+                // stays a range until the buyer picks one for themselves.
+                if (priceBands.length > 0) {
+                    html += `
+                    <section class="space-y-2">
+                        <p class="font-label-md text-label-md text-text-hint uppercase tracking-widest">Select age band for exact pricing</p>
+                        <div class="flex flex-wrap gap-2">
+                    `;
+                    priceBands.forEach((b, idx) => {
+                        const activeCls = idx === currentBandIdx
+                            ? 'bg-primary text-on-primary'
+                            : 'bg-surface-container text-on-surface hover:bg-surface-container-high';
+                        html += `
+                            <button type="button" onclick="selectBand(${idx})" class="px-4 py-2 rounded-full text-sm font-medium transition ${activeCls}">
+                                ${b.label}
+                            </button>
+                        `;
+                    });
+                    html += `
+                        </div>
+                    </section>
+                    `;
                 }
             } else {
                 const heroLabel = heroFigure ? heroFigure.label.toUpperCase() : 'INDICATIVE RETURN';
@@ -452,7 +545,7 @@
                         ` : `
                         <p class="font-overline text-overline text-text-hint uppercase tracking-widest">${isInsurance ? 'ESTIMATED PREMIUM' : 'MINIMUM INVESTMENT'}</p>
                         <p class="font-h3 text-h3 text-primary">
-                            KES ${isInsurance ? (activeDetails.indicative_premium || 0).toLocaleString() : (activeDetails.minimum_investment || 0).toLocaleString()}
+                            ${isInsurance ? premiumDisplay : `KES ${(activeDetails.minimum_investment || 0).toLocaleString()}`}
                             ${isInsurance ? `<span class="font-body-sm text-body-sm text-text-hint font-normal">/ ${activeDetails.premium_frequency || 'mo'}</span>` : ''}
                         </p>
                         `}
@@ -465,6 +558,8 @@
             `;
 
             document.getElementById('app').innerHTML = html;
+            heroIdx = 0;
+            startHeroCarousel(heroImages.length);
         }
     </script>
 </body>
