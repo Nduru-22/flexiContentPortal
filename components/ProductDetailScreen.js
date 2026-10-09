@@ -80,7 +80,7 @@ window.ProductDetailScreen = function ProductDetailScreen({ productId, partnersM
     // (the default shown on landing), additional options come from
     // product.variants. Each carries a complete independent details blob.
     const options = [
-        { id: null, label: 'Option 1', details },
+        { id: null, label: details.option_label || 'Option 1', details },
         ...(product.variants || []).map(v => ({ id: v.id, label: v.label, details: v.details || {} }))
     ];
     const activeDetails = options[selectedIdx]?.details || details;

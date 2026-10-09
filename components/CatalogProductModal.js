@@ -15,6 +15,11 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         description: product?.description || '',
         active: product?.active ?? true,
 
+        // Name for this product's own details, which is always the
+        // implicit first option on the storefront -- same idea as a
+        // variant's own label. Blank falls back to "Option 1".
+        option_label: existingDetails.option_label || '',
+
         // payment details
         payment_method: product?.payment_details?.method || 'paybill',
         payment_identifier: product?.payment_details?.identifier || '',
@@ -198,6 +203,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 topline_figures: formData.requires_quote ? [] : figures,
                 requires_quote: formData.requires_quote,
                 price_bands: formData.requires_quote ? [] : buildPriceBands(priceBands),
+                option_label: formData.option_label.trim() || null,
                 key_features: features
             };
         }
@@ -205,6 +211,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             fund_type: formData.fund_type,
             risk_level: formData.risk_level,
             topline_figures: figures,
+            option_label: formData.option_label.trim() || null,
             key_features: features,
             management_fee: formData.management_fee === '' ? null : parseFloat(formData.management_fee),
             inception_date: formData.inception_date || null,
@@ -550,6 +557,14 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                     {formData.vertical === 'insurance' ? (
                         <div className="border-t pt-5">
                             <h4 className="font-semibold text-gray-800 mb-3">Insurance details</h4>
+                            <div className="mb-4">
+                                <label className={labelCls}>
+                                    This Option's Name <span className="text-xs text-gray-400">(optional — shown on the options switcher next to your other options, e.g. "KES 50,000 Cover". Leave blank to just show "Option 1")</span>
+                                </label>
+                                <input type="text" value={formData.option_label}
+                                    onChange={(e) => handleChange('option_label', e.target.value)} className={inputCls}
+                                    placeholder='e.g., KES 50,000 Cover' />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label className={labelCls}>Category *</label>
@@ -618,6 +633,14 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                     ) : (
                         <div className="border-t pt-5">
                             <h4 className="font-semibold text-gray-800 mb-3">Investment details</h4>
+                            <div className="mb-4">
+                                <label className={labelCls}>
+                                    This Option's Name <span className="text-xs text-gray-400">(optional — shown on the options switcher next to your other options. Leave blank to just show "Option 1")</span>
+                                </label>
+                                <input type="text" value={formData.option_label}
+                                    onChange={(e) => handleChange('option_label', e.target.value)} className={inputCls}
+                                    placeholder='e.g., Growth Plan' />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label className={labelCls}>Fund Type *</label>
