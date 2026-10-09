@@ -25,16 +25,31 @@ window.CatalogProducts = function CatalogProducts() {
 
     const loadProducts = async () => {
         setLoading(true);
-        const result = await window.catalogAPI.products.getAll(verticalFilter ? { vertical: verticalFilter } : {});
+        // Active only -- a deactivated product can't be reactivated from
+        // anywhere in this portal, so there's no reason to keep showing
+        // it here once it's gone from the app catalog.
+        const result = await window.catalogAPI.products.getAll({
+            active: true,
+            ...(verticalFilter ? { vertical: verticalFilter } : {}),
+        });
         if (result.status === '4000') setProducts(result.detail || []);
         setLoading(false);
     };
 
-    const handleDeactivate = async (productId, title) => {
-        if (!confirm(`Deactivate "${title}"? It will disappear from the app catalog.`)) return;
-        const result = await window.catalogAPI.products.deactivate(productId);
-        if (result.status === '4000') loadProducts();
-        else alert(result.message || 'Failed to deactivate product');
+    const handleDelete = async (productId, title) => {
+        if (!confirm(`Delete "${title}"? This can't be undone.`)) return;
+        const result = await window.catalogAPI.products.delete(productId);
+        if (result.status !== '4000') {
+            alert(result.message || 'Failed to delete product');
+            return;
+        }
+        // The backend only hard-deletes when nothing customer-facing
+        // references this product -- if a holding/conversation exists,
+        // it deactivates instead and says so here. Either way the
+        // product drops out of this active-only list; the admin just
+        // needs to know which one happened.
+        if (result.detail?.deactivated) alert(result.message);
+        loadProducts();
     };
 
     const handleEdit = async (product) => {
@@ -147,16 +162,13 @@ window.CatalogProducts = function CatalogProducts() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map(product => (
-                            <div key={product.id} className={`bg-white rounded-xl shadow-md p-6 card-hover ${!product.active ? 'opacity-60' : ''}`}>
+                            <div key={product.id} className="bg-white rounded-xl shadow-md p-6 card-hover">
                                 <div className="flex items-start justify-between mb-3">
                                     <span className={`text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full ${
                                         product.vertical === 'insurance' ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'
                                     }`}>
                                         {product.vertical}
                                     </span>
-                                    {!product.active && (
-                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Inactive</span>
-                                    )}
                                 </div>
 
                                 <h3 className="font-bold text-lg text-gray-800 mb-1 leading-tight">{product.title}</h3>
@@ -172,14 +184,12 @@ window.CatalogProducts = function CatalogProducts() {
                                         <window.Icons.Edit />
                                         Edit
                                     </button>
-                                    {product.active && (
-                                        <button
-                                            onClick={() => handleDeactivate(product.id, product.title)}
-                                            className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
-                                        >
-                                            <window.Icons.Trash />
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => handleDelete(product.id, product.title)}
+                                        className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+                                    >
+                                        <window.Icons.Trash />
+                                    </button>
                                 </div>
                             </div>
                         ))}
