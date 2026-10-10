@@ -5,6 +5,7 @@ window.APP_CONFIG = {
     CONTENT_API_BASE: window.ENV?.CONTENT_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
     GETTER_API_BASE: window.ENV?.GETTER_API_BASE || 'https://api.zeegoapp.com/getter/api/v1',
     MAKER_API_BASE: window.ENV?.MAKER_API_BASE || 'https://api.zeegoapp.com/maker/api/v1',
+    PAYMENTS_API_BASE: window.ENV?.PAYMENTS_API_BASE || 'https://api.zeegoapp.com/payments/api/v1',
     PUBLIC_DEEPLINK_BASE: window.ENV?.PUBLIC_DEEPLINK_BASE || 'https://flexiwallets.com/deeplink',
     APP_NAME: window.ENV?.APP_NAME || 'FlexiWallets Admin',
     VERSION: window.ENV?.APP_VERSION || '1.0.0'
@@ -206,6 +207,25 @@ window.BANNER_VERTICALS = [
     { value: 'global', label: 'Both (Global)' },
     { value: 'insurance', label: 'Insurance only' },
     { value: 'investment', label: 'Investment only' }
+];
+
+// Common-items catalog (shopping-list tap-to-build feature, loaded from
+// APP_CONFIG.PAYMENTS_API_BASE). A fixed vocabulary rather than free text
+// so the app's category filter stays clean regardless of whatever wording
+// a scraped price source uses.
+window.CATALOG_ITEM_CATEGORIES = [
+    'Produce',
+    'Dairy & Eggs',
+    'Grains & Cereals',
+    'Meat & Fish',
+    'Household',
+    'Beverages',
+    'Bakery',
+    'Other'
+];
+
+window.CATALOG_ITEM_UNITS = [
+    'piece', 'bunch', 'kg', 'gram', 'litre', 'box', 'bale', 'packet', 'bag', 'tray'
 ];
 
 // Challenges configuration (loaded from APP_CONFIG.AUTH_BASE)

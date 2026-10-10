@@ -70,6 +70,8 @@ function App() {
             setCurrentView('catalog-partners');
         } else if (section === 'challenges') {
             setCurrentView('challenges');
+        } else if (section === 'items') {
+            setCurrentView('catalog-items');
         }
     };
 
@@ -113,19 +115,28 @@ function App() {
         { id: 'challenges', label: '🏆 Challenges', component: window.Challenges }
     ];
 
+    // Define common-items catalog navigation items (shopping-list
+    // tap-to-build feature -- lives on the payments service, see
+    // services/item-templates-api.js)
+    const itemsNavItems = [
+        { id: 'catalog-items', label: '🧺 Common Items', component: window.CatalogItemTemplates }
+    ];
+
     const sectionNavItems = {
         shop: shopNavItems,
         content: contentNavItems,
         deeplinks: deeplinksNavItems,
         plans: plansNavItems,
-        challenges: challengesNavItems
+        challenges: challengesNavItems,
+        items: itemsNavItems
     };
     const sectionDefaultComponent = {
         shop: Dashboard,
         content: Content,
         deeplinks: DeepLinks,
         plans: window.CatalogPartners,
-        challenges: window.Challenges
+        challenges: window.Challenges,
+        items: window.CatalogItemTemplates
     };
 
     const currentNavItems = sectionNavItems[currentSection];
@@ -195,6 +206,16 @@ function App() {
                                     }`}
                                 >
                                     🏆 Challenges
+                                </button>
+                                <button
+                                    onClick={() => handleSectionChange('items')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'items'
+                                            ? 'bg-white text-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    🧺 Common Items
                                 </button>
                             </div>
                         </div>
