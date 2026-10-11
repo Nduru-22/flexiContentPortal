@@ -32,6 +32,88 @@ const CATEGORY_ICON = {
 };
 const categoryIcon = (category) => CATEGORY_ICON[category] || '🛒';
 
+// Separate component (not inlined in the grid's .map) so each card can
+// hold its own "did the image fail to load" state -- falls back to the
+// category icon rather than a broken-image glyph, since not every item
+// has image_url (only the ones the scrape actually found a photo for).
+function CatalogItemCard({ item, onEdit, onDelete, priceRangeLabel, savingsLabel }) {
+    const [imgFailed, setImgFailed] = useState(false);
+    const savings = savingsLabel(item);
+    const showImage = item.image_url && !imgFailed;
+
+    return (
+        <div className={`bg-white rounded-xl shadow-md overflow-hidden card-hover ${!item.active ? 'opacity-60' : ''}`}>
+            <div className="relative h-40 bg-gray-50 flex items-center justify-center">
+                {showImage ? (
+                    <img
+                        src={item.image_url}
+                        alt={item.name}
+                        loading="lazy"
+                        onError={() => setImgFailed(true)}
+                        className="h-full w-full object-contain p-3"
+                    />
+                ) : (
+                    <span className="text-5xl leading-none" aria-hidden="true">{categoryIcon(item.category)}</span>
+                )}
+                {!item.active && (
+                    <span className="absolute top-2 right-2 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-gray-200 text-gray-600">
+                        Inactive
+                    </span>
+                )}
+            </div>
+
+            <div className="p-6">
+                <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-teal-100 text-teal-700 inline-block mb-3">
+                    {item.category}
+                </span>
+
+                <h3 className="font-bold text-lg text-gray-800 mb-1 leading-tight">{item.name}</h3>
+                <p className="text-sm text-gray-500 mb-3">{item.unit || 'No unit set'}</p>
+
+                <div className="flex items-center gap-2 mb-2">
+                    <p className="text-sm text-gray-700 font-medium">{priceRangeLabel(item)}</p>
+                    {savings && (
+                        <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                            {savings}
+                        </span>
+                    )}
+                </div>
+                {item.prices && item.prices.length > 0 && (
+                    <p className="text-xs text-gray-400 mb-2">
+                        Compared across {item.prices.length} store{item.prices.length === 1 ? '' : 's'}
+                    </p>
+                )}
+                {item.prices && item.prices.length > 0 && (
+                    <div className="space-y-1 mb-4">
+                        {item.prices.map((p, idx) => (
+                            <div key={idx} className="flex justify-between text-xs text-gray-500">
+                                <span>{p.retailer}</span>
+                                <span>KES {p.price?.toLocaleString()}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="flex gap-2 pt-4 border-t">
+                    <button
+                        onClick={onEdit}
+                        className="flex-1 flex items-center justify-center gap-1 bg-indigo-500 text-white px-3 py-2 rounded-lg hover:bg-indigo-600 transition text-sm"
+                    >
+                        <window.Icons.Edit />
+                        Edit
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+                    >
+                        <window.Icons.Trash />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 window.CatalogItemTemplates = function CatalogItemTemplates() {
     const [items, setItems] = useState([]);
     const [total, setTotal] = useState(null);
@@ -204,67 +286,16 @@ window.CatalogItemTemplates = function CatalogItemTemplates() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items.map(item => {
-                            const savings = savingsLabel(item);
-                            return (
-                                <div key={item.uid} className={`bg-white rounded-xl shadow-md p-6 card-hover ${!item.active ? 'opacity-60' : ''}`}>
-                                    <div className="flex items-start justify-between mb-3">
-                                        <span className="text-3xl leading-none" aria-hidden="true">{categoryIcon(item.category)}</span>
-                                        {!item.active && (
-                                            <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-gray-200 text-gray-600">
-                                                Inactive
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-teal-100 text-teal-700 inline-block mb-3">
-                                        {item.category}
-                                    </span>
-
-                                    <h3 className="font-bold text-lg text-gray-800 mb-1 leading-tight">{item.name}</h3>
-                                    <p className="text-sm text-gray-500 mb-3">{item.unit || 'No unit set'}</p>
-
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <p className="text-sm text-gray-700 font-medium">{priceRangeLabel(item)}</p>
-                                        {savings && (
-                                            <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                                                {savings}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {item.prices && item.prices.length > 0 && (
-                                        <p className="text-xs text-gray-400 mb-2">
-                                            Compared across {item.prices.length} store{item.prices.length === 1 ? '' : 's'}
-                                        </p>
-                                    )}
-                                    {item.prices && item.prices.length > 0 && (
-                                        <div className="space-y-1 mb-4">
-                                            {item.prices.map((p, idx) => (
-                                                <div key={idx} className="flex justify-between text-xs text-gray-500">
-                                                    <span>{p.retailer}</span>
-                                                    <span>KES {p.price?.toLocaleString()}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <div className="flex gap-2 pt-4 border-t">
-                                        <button
-                                            onClick={() => handleEdit(item)}
-                                            className="flex-1 flex items-center justify-center gap-1 bg-indigo-500 text-white px-3 py-2 rounded-lg hover:bg-indigo-600 transition text-sm"
-                                        >
-                                            <window.Icons.Edit />
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(item)}
-                                            className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
-                                        >
-                                            <window.Icons.Trash />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {items.map(item => (
+                            <CatalogItemCard
+                                key={item.uid}
+                                item={item}
+                                onEdit={() => handleEdit(item)}
+                                onDelete={() => handleDelete(item)}
+                                priceRangeLabel={priceRangeLabel}
+                                savingsLabel={savingsLabel}
+                            />
+                        ))}
                     </div>
 
                     {/* Sentinel -- triggers the next page once scrolled near. */}

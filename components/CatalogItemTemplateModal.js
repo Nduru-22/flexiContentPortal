@@ -12,6 +12,7 @@ window.CatalogItemTemplateModal = function CatalogItemTemplateModal({ item, onCl
         unit: item?.unit || window.CATALOG_ITEM_UNITS[0],
         sort_order: item?.sort_order ?? 0,
         active: item?.active ?? true,
+        image_url: item?.image_url || '',
     });
 
     const [prices, setPrices] = useState(
@@ -67,6 +68,7 @@ window.CatalogItemTemplateModal = function CatalogItemTemplateModal({ item, onCl
                 unit: formData.unit,
                 sort_order: parseInt(formData.sort_order) || 0,
                 active: formData.active,
+                image_url: formData.image_url.trim() || null,
                 prices: builtPrices,
             });
         } else {
@@ -76,6 +78,7 @@ window.CatalogItemTemplateModal = function CatalogItemTemplateModal({ item, onCl
                 category: formData.category,
                 unit: formData.unit,
                 sort_order: parseInt(formData.sort_order) || 0,
+                image_url: formData.image_url.trim() || null,
                 prices: builtPrices,
             });
         }
@@ -167,6 +170,30 @@ window.CatalogItemTemplateModal = function CatalogItemTemplateModal({ item, onCl
                                 onChange={(e) => handleChange('sort_order', e.target.value)}
                                 className={inputCls}
                             />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className={labelCls}>
+                                Image URL <span className="text-xs text-gray-400">(falls back to a category icon if left blank or the link breaks)</span>
+                            </label>
+                            <div className="flex gap-3 items-start">
+                                <input
+                                    type="url"
+                                    value={formData.image_url}
+                                    onChange={(e) => handleChange('image_url', e.target.value)}
+                                    className={inputCls}
+                                    placeholder="https://..."
+                                />
+                                {formData.image_url && (
+                                    <img
+                                        src={formData.image_url}
+                                        alt=""
+                                        className="h-16 w-16 object-contain border border-gray-200 rounded-lg flex-shrink-0 bg-gray-50"
+                                        onError={(e) => { e.target.style.visibility = 'hidden'; }}
+                                        onLoad={(e) => { e.target.style.visibility = 'visible'; }}
+                                    />
+                                )}
+                            </div>
                         </div>
 
                         {isEdit && (
