@@ -119,7 +119,8 @@ function App() {
     // tap-to-build feature -- lives on the payments service, see
     // services/item-templates-api.js)
     const itemsNavItems = [
-        { id: 'catalog-items', label: '🧺 Common Items', component: window.CatalogItemTemplates }
+        { id: 'catalog-items', label: '🧺 Common Items', component: window.CatalogItemTemplates },
+        { id: 'shopping-templates', label: '📝 List Templates', component: window.ShoppingListTemplates }
     ];
 
     const sectionNavItems = {
@@ -233,8 +234,8 @@ function App() {
                         </div>
                     </div>
 
-                    {/* Tabs Navigation - shop, content, and plans sections have sub-tabs */}
-                    {(currentSection === 'shop' || currentSection === 'content' || currentSection === 'plans') && (
+                    {/* Tabs Navigation - shop, content, plans, and items sections have sub-tabs */}
+                    {(currentSection === 'shop' || currentSection === 'content' || currentSection === 'plans' || currentSection === 'items') && (
                         <nav className="flex space-x-1 -mb-px overflow-x-auto">
                             {currentNavItems.map((item) => (
                                 <button
