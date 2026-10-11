@@ -210,18 +210,26 @@ window.BANNER_VERTICALS = [
 ];
 
 // Common-items catalog (shopping-list tap-to-build feature, loaded from
-// APP_CONFIG.PAYMENTS_API_BASE). A fixed vocabulary rather than free text
-// so the app's category filter stays clean regardless of whatever wording
-// a scraped price source uses.
+// APP_CONFIG.PAYMENTS_API_BASE). These are the actual categories the
+// 047_seed_common_items_catalog migration seeded (grouped here the same
+// way the source scrape grouped them -- Baby / Groceries / Health &
+// beauty / Household -- purely for a sane filter-button order; `category`
+// itself is a flat string column, there's no group concept server-side).
 window.CATALOG_ITEM_CATEGORIES = [
-    'Produce',
-    'Dairy & Eggs',
-    'Grains & Cereals',
-    'Meat & Fish',
-    'Household',
-    'Beverages',
-    'Bakery',
-    'Other'
+    // Baby
+    'Baby food', 'Diapers', 'Baby soap & shampoo',
+    // Groceries
+    'Dairy & milk', 'Yoghurt', 'Juices', 'Soft drinks', 'Tea', 'Coffee, tea & cocoa',
+    'Squash & cordials', 'Breakfast cereals', 'Flour & baking', 'Rice', 'Pulses & grains',
+    'Cooking oil & ghee', 'Cooking sauces', 'Sauces & condiments', 'Jam, honey & spreads',
+    'Sugar & sweeteners', 'Spices & herbs', 'Biscuits & cakes', 'Chocolate & sweets',
+    'Cold cuts & sausages',
+    // Health & beauty
+    'Dental care', 'Feminine care', 'Body lotion', 'Deodorants',
+    'Face moisturizers', 'Face cleansers', 'Shower & bath',
+    // Household
+    'Laundry', 'Dish washing', 'Toilet & kitchen rolls',
+    'Bleach & stain removers', 'Cleaning supplies', 'Disinfectants & wipes',
 ];
 
 window.CATALOG_ITEM_UNITS = [
