@@ -106,9 +106,13 @@ window.deeplinksAPI = {
             return res.status === '4000' ? (res.detail?.items || []) : [];
         },
 
+        // /challenges/admin (not /public) -- a private challenge has no
+        // other way for its intended participants to reach it, so the
+        // generator needs to be able to pick one too. Same shape as the
+        // public endpoint (id/name), just without the public=True filter.
         async challenges() {
             const res = await window.api.call(
-                `${window.APP_CONFIG.AUTH_BASE}/challenges/public`,
+                `${window.APP_CONFIG.AUTH_BASE}/challenges/admin`,
                 { method: 'GET', headers: deeplinkAuthHeaders() }
             );
             return res.status === '4000' ? (res.detail || []) : [];
