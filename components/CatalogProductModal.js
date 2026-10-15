@@ -27,7 +27,11 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         // insurance details
         category: existingDetails.category || 'health',
         indicative_premium: existingDetails.indicative_premium ?? '',
-        premium_frequency: existingDetails.premium_frequency || 'monthly',
+        // No forced default -- a product sold in bands that are
+        // themselves the period (e.g. 12/6/3-month covers) has no single
+        // frequency that makes sense, so it's left blank ("N/A") rather
+        // than silently defaulting to Monthly.
+        premium_frequency: existingDetails.premium_frequency || '',
         requires_quote: existingDetails.requires_quote || false,
 
         // investment details
@@ -83,7 +87,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             _key: `v-${v.id}`,
             id: v.id,
             label: v.label || '',
-            premium_frequency: v.details?.premium_frequency || 'monthly',
+            premium_frequency: v.details?.premium_frequency || '',
             indicative_premium: v.details?.indicative_premium ?? '',
             requires_quote: v.details?.requires_quote || false,
             risk_level: v.details?.risk_level || 'low',
@@ -133,7 +137,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             _key: `new-${Date.now()}-${Math.random()}`,
             id: null,
             label: '',
-            premium_frequency: 'monthly',
+            premium_frequency: '',
             indicative_premium: '',
             requires_quote: false,
             risk_level: 'low',
@@ -199,7 +203,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             return {
                 category: formData.category,
                 indicative_premium: formData.requires_quote ? null : (formData.indicative_premium === '' ? null : parseFloat(formData.indicative_premium)),
-                premium_frequency: formData.premium_frequency,
+                premium_frequency: formData.premium_frequency || null,
                 topline_figures: formData.requires_quote ? [] : figures,
                 requires_quote: formData.requires_quote,
                 price_bands: formData.requires_quote ? [] : buildPriceBands(priceBands),
@@ -224,7 +228,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         const figures = buildFigures(v.figures);
         if (formData.vertical === 'insurance') {
             return {
-                premium_frequency: v.premium_frequency,
+                premium_frequency: v.premium_frequency || null,
                 indicative_premium: v.requires_quote ? null : (v.indicative_premium === '' ? null : parseFloat(v.indicative_premium)),
                 topline_figures: v.requires_quote ? [] : figures,
                 requires_quote: v.requires_quote,

@@ -172,6 +172,12 @@ window.INSURANCE_CATEGORIES = [
 ];
 
 window.PREMIUM_FREQUENCIES = [
+    // Not every product has a single frequency -- a product sold in
+    // 12/6/3-month cover bands has the band itself as the period, so
+    // forcing e.g. "Annually" on it would be wrong. This stays first so
+    // it's the default for a brand-new band, instead of silently
+    // defaulting to Monthly.
+    { value: '', label: 'N/A (band defines the period)' },
     { value: 'monthly', label: 'Monthly' },
     { value: 'quarterly', label: 'Quarterly' },
     { value: 'annually', label: 'Annually' }
