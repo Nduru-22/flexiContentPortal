@@ -448,6 +448,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                                     {pickerOptions.map(opt => (
                                         <option key={opt[typeInfo.optionIdField]} value={opt[typeInfo.optionIdField]}>
                                             {opt[typeInfo.optionNameField]} ({opt[typeInfo.optionIdField]})
+                                            {opt.is_public === false ? ' — Private' : ''}
                                         </option>
                                     ))}
                                 </select>
