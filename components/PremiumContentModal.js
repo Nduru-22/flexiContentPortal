@@ -53,7 +53,7 @@ function slugify(text) {
         .replace(/(^-|-$)/g, '');
 }
 
-window.PremiumContentModal = function PremiumContentModal({ content, onClose, onSave }) {
+window.PremiumContentModal = function PremiumContentModal({ content, influencers = [], onClose, onSave }) {
     const isEdit = !!content;
     const templateData = content?.template_data;
 
@@ -67,6 +67,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, onClose, on
         duration: content?.duration || '',
         requires_purchase: content?.requires_purchase ?? true,
         juno_eligible: content?.juno_eligible ?? true,
+        influencer_id: content?.influencer_id || '',
         // video
         content_url: content?.content_url || '',
         video_category: (content?.content_type === 'video' && templateData?.category) || '',
@@ -245,6 +246,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, onClose, on
             price: formData.price === '' ? 0 : parseFloat(formData.price),
             requires_purchase: formData.requires_purchase,
             juno_eligible: formData.juno_eligible,
+            influencer_id: formData.influencer_id || null,
             template_data
         };
 
@@ -553,6 +555,21 @@ window.PremiumContentModal = function PremiumContentModal({ content, onClose, on
                                 Lets a parent gift this to their own Juno at purchase time.
                             </p>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className={labelCls}>Attributed Influencer</label>
+                        <select value={formData.influencer_id}
+                            onChange={(e) => handleChange('influencer_id', e.target.value)}
+                            className={inputCls}>
+                            <option value="">None</option>
+                            {influencers.map(i => (
+                                <option key={i.id} value={i.id}>{i.name} ({i.referral_code})</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Optional -- who this piece of content was created for/with.
+                        </p>
                     </div>
 
                     {error && (

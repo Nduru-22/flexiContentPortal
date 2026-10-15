@@ -3,6 +3,7 @@ const { useState, useEffect } = React;
 
 window.PremiumContent = function PremiumContent() {
     const [items, setItems] = useState([]);
+    const [influencers, setInfluencers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
@@ -11,7 +12,17 @@ window.PremiumContent = function PremiumContent() {
 
     useEffect(() => {
         loadItems();
+        loadInfluencers();
     }, []);
+
+    const loadInfluencers = async () => {
+        const result = await window.influencersAPI.getAll();
+        if (result.status === '4000') {
+            setInfluencers(result.detail || []);
+        }
+    };
+
+    const influencerName = (id) => influencers.find(i => i.id === id)?.name;
 
     const loadItems = async () => {
         setLoading(true);
@@ -143,6 +154,11 @@ window.PremiumContent = function PremiumContent() {
                                             Not shown to Juno accounts
                                         </span>
                                     )}
+                                    {item.influencer_id && influencerName(item.influencer_id) && (
+                                        <span className="inline-block text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 mb-2">
+                                            👥 {influencerName(item.influencer_id)}
+                                        </span>
+                                    )}
 
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-2xl font-bold text-purple-600">
@@ -174,6 +190,7 @@ window.PremiumContent = function PremiumContent() {
             {showModal && (
                 <window.PremiumContentModal
                     content={editingContent}
+                    influencers={influencers}
                     onClose={() => setShowModal(false)}
                     onSave={() => { setShowModal(false); loadItems(); }}
                 />

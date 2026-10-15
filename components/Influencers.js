@@ -1,4 +1,7 @@
-// Influencers Component
+// Influencers Component (referral-code attribution system)
+// Replaces the old shop-coupon Influencers tab -- this one manages the
+// Influencer rows used for signup referral attribution AND for tagging
+// premium content / challenges as attributed to a given influencer.
 const { useState, useEffect } = React;
 
 window.Influencers = function Influencers() {
@@ -14,23 +17,11 @@ window.Influencers = function Influencers() {
 
     const loadInfluencers = async () => {
         setLoading(true);
-        const result = await window.api.influencers.getAll();
+        const result = await window.influencersAPI.getAll();
         if (result.status === '4000') {
             setInfluencers(result.detail || []);
         }
         setLoading(false);
-    };
-
-    const handleDelete = async (influencerId, influencerName) => {
-        if (!confirm(`Are you sure you want to delete "${influencerName}"?`)) return;
-        
-        const result = await window.api.influencers.delete(influencerId);
-        if (result.status === '4000') {
-            loadInfluencers();
-            alert('Influencer deleted successfully!');
-        } else {
-            alert(result.message || 'Failed to delete influencer');
-        }
     };
 
     const handleEdit = (influencer) => {
@@ -43,13 +34,22 @@ window.Influencers = function Influencers() {
         setShowModal(true);
     };
 
+    const handleToggleStatus = async (influencer) => {
+        const nextStatus = influencer.status === 'active' ? 'inactive' : 'active';
+        const result = await window.influencersAPI.update(influencer.id, { status: nextStatus });
+        if (result.status === '4000') {
+            loadInfluencers();
+        } else {
+            alert(result.message || 'Failed to update influencer');
+        }
+    };
+
     const filteredInfluencers = influencers.filter(i => {
         const searchLower = searchTerm.toLowerCase();
         return (
-            i.influencer_name?.toLowerCase().includes(searchLower) ||
-            i.influencer_email?.toLowerCase().includes(searchLower) ||
+            i.name?.toLowerCase().includes(searchLower) ||
             i.referral_code?.toLowerCase().includes(searchLower) ||
-            i.social_platform?.toLowerCase().includes(searchLower)
+            i.contact_info?.toLowerCase().includes(searchLower)
         );
     });
 
@@ -57,7 +57,12 @@ window.Influencers = function Influencers() {
         <div className="space-y-6 fade-in">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Influencer Management</h2>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Influencers</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                        Referral codes used at signup, and for attributing premium content / challenges.
+                    </p>
+                </div>
                 <button
                     onClick={handleAdd}
                     className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition shadow-md"
@@ -72,7 +77,7 @@ window.Influencers = function Influencers() {
                 <div className="relative">
                     <input
                         type="text"
-                        placeholder="Search influencers by name, email, code, or platform..."
+                        placeholder="Search influencers by name, referral code, or contact..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
@@ -111,53 +116,47 @@ window.Influencers = function Influencers() {
                     <div className="text-sm text-gray-600">
                         Showing {filteredInfluencers.length} of {influencers.length} influencers
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredInfluencers.map(influencer => (
-                            <div key={influencer.influencer_id} className="bg-white rounded-xl shadow-md p-6 card-hover">
+                            <div key={influencer.id} className="bg-white rounded-xl shadow-md p-6 card-hover">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex-1">
                                         <h3 className="font-bold text-lg text-gray-800 mb-1">
-                                            {influencer.influencer_name}
+                                            {influencer.name}
                                         </h3>
-                                        <p className="text-sm text-gray-600">
-                                            {influencer.social_platform || 'No platform specified'}
-                                        </p>
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            influencer.status === 'active'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {influencer.status === 'active' ? 'Active' : 'Inactive'}
+                                        </span>
                                     </div>
                                     <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600">
                                         <window.Icons.Star />
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-2 mb-4 text-sm">
                                     <div className="flex items-center justify-between">
                                         <span className="text-gray-600">Referral Code:</span>
                                         <span className="font-mono font-bold text-yellow-600">
-                                            {influencer.referral_code || 'N/A'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        {influencer.influencer_email || 'No email'}
-                                    </div>
-                                    <div className="flex items-center justify-between pt-2 border-t">
-                                        <span className="text-gray-600">Commission:</span>
-                                        <span className="font-bold text-green-600">
-                                            {influencer.commission_rate}%
+                                            {influencer.referral_code}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-gray-600">Total Referrals:</span>
-                                        <span className="font-bold">{influencer.total_referrals || 0}</span>
+                                        <span className="text-gray-600">Contact:</span>
+                                        <span className="text-gray-800 truncate max-w-[60%]" title={influencer.contact_info}>
+                                            {influencer.contact_info || 'Not set'}
+                                        </span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-gray-600">Total Earnings:</span>
-                                        <span className="font-bold">KES {(influencer.total_earnings || 0).toLocaleString()}</span>
+                                        <span className="text-gray-600">Added:</span>
+                                        <span className="text-gray-800">{influencer.created_at?.split(' ')[0] || 'N/A'}</span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex gap-2 pt-4 border-t">
                                     <button
                                         onClick={() => handleEdit(influencer)}
@@ -167,10 +166,14 @@ window.Influencers = function Influencers() {
                                         Edit
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(influencer.influencer_id, influencer.influencer_name)}
-                                        className="flex items-center justify-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+                                        onClick={() => handleToggleStatus(influencer)}
+                                        className={`flex-1 px-3 py-2 rounded-lg transition text-sm font-medium ${
+                                            influencer.status === 'active'
+                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                : 'bg-green-500 text-white hover:bg-green-600'
+                                        }`}
                                     >
-                                        <window.Icons.Trash />
+                                        {influencer.status === 'active' ? 'Deactivate' : 'Activate'}
                                     </button>
                                 </div>
                             </div>
@@ -184,9 +187,9 @@ window.Influencers = function Influencers() {
                 <window.InfluencerModal
                     influencer={editingInfluencer}
                     onClose={() => setShowModal(false)}
-                    onSave={() => { 
-                        setShowModal(false); 
-                        loadInfluencers(); 
+                    onSave={() => {
+                        setShowModal(false);
+                        loadInfluencers();
                     }}
                 />
             )}

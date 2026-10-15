@@ -72,6 +72,8 @@ function App() {
             setCurrentView('challenges');
         } else if (section === 'items') {
             setCurrentView('catalog-items');
+        } else if (section === 'influencers') {
+            setCurrentView('influencers');
         }
     };
 
@@ -88,8 +90,7 @@ function App() {
         { id: 'dashboard', label: '📊 Dashboard', component: Dashboard },
         { id: 'products', label: '🛍️ Products', component: Products },
         { id: 'merchants', label: '🏪 Merchants', component: Merchants },
-        { id: 'discounts', label: '🎫 Discounts', component: Discounts },
-        { id: 'influencers', label: '👥 Influencers', component: Influencers }
+        { id: 'discounts', label: '🎫 Discounts', component: Discounts }
     ];
 
     // Define content navigation items
@@ -123,13 +124,21 @@ function App() {
         { id: 'shopping-templates', label: '📝 List Templates', component: window.ShoppingListTemplates }
     ];
 
+    // Referral-code influencers (users service) -- replaces the old,
+    // broken shop-coupon "Influencers" sub-tab under Shop. Single screen,
+    // no sub-tabs of its own.
+    const influencersNavItems = [
+        { id: 'influencers', label: '👥 Influencers', component: window.Influencers }
+    ];
+
     const sectionNavItems = {
         shop: shopNavItems,
         content: contentNavItems,
         deeplinks: deeplinksNavItems,
         plans: plansNavItems,
         challenges: challengesNavItems,
-        items: itemsNavItems
+        items: itemsNavItems,
+        influencers: influencersNavItems
     };
     const sectionDefaultComponent = {
         shop: Dashboard,
@@ -137,7 +146,8 @@ function App() {
         deeplinks: DeepLinks,
         plans: window.CatalogPartners,
         challenges: window.Challenges,
-        items: window.CatalogItemTemplates
+        items: window.CatalogItemTemplates,
+        influencers: window.Influencers
     };
 
     const currentNavItems = sectionNavItems[currentSection];
@@ -217,6 +227,16 @@ function App() {
                                     }`}
                                 >
                                     🧺 Common Items
+                                </button>
+                                <button
+                                    onClick={() => handleSectionChange('influencers')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'influencers'
+                                            ? 'bg-white text-yellow-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    👥 Influencers
                                 </button>
                             </div>
                         </div>
