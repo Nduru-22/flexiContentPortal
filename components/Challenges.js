@@ -3,6 +3,7 @@ const { useState, useEffect } = React;
 
 window.Challenges = function Challenges() {
     const [challenges, setChallenges] = useState([]);
+    const [influencers, setInfluencers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
@@ -10,7 +11,13 @@ window.Challenges = function Challenges() {
 
     useEffect(() => {
         loadChallenges();
+        loadInfluencers();
     }, []);
+
+    const loadInfluencers = async () => {
+        const result = await window.influencersAPI.getAll();
+        if (result.status === '4000') setInfluencers(result.detail || []);
+    };
 
     const loadChallenges = async () => {
         setLoading(true);
@@ -162,6 +169,7 @@ window.Challenges = function Challenges() {
             {showModal && (
                 <window.ChallengeModal
                     challenge={editingChallenge}
+                    influencers={influencers}
                     onClose={() => setShowModal(false)}
                     onSave={() => { setShowModal(false); loadChallenges(); }}
                 />

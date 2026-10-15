@@ -21,7 +21,7 @@ function toDateInputValue(value) {
     return String(value).slice(0, 10);
 }
 
-window.ChallengeModal = function ChallengeModal({ challenge, onClose, onSave }) {
+window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], onClose, onSave }) {
     const isEdit = !!challenge;
     const rewards = challenge?.rewards || {};
     const hasPayout = !!(challenge?.payout_company_name || challenge?.payout_payment_identifier);
@@ -45,7 +45,7 @@ window.ChallengeModal = function ChallengeModal({ challenge, onClose, onSave }) 
         juno_eligible: challenge?.juno_eligible ?? true,
         is_active: challenge?.is_active ?? true,
         hero_image_url: challenge?.hero_image_url || '',
-        influencer_name: challenge?.influencer_name || '',
+        influencer_id: challenge?.influencer_id || '',
         payout_company_name: challenge?.payout_company_name || '',
         payout_payment_method: challenge?.payout_payment_method || 'paybill',
         payout_payment_identifier: challenge?.payout_payment_identifier || ''
@@ -88,7 +88,10 @@ window.ChallengeModal = function ChallengeModal({ challenge, onClose, onSave }) 
             public: formData.public,
             juno_eligible: formData.juno_eligible,
             hero_image_url: formData.hero_image_url.trim() || null,
-            influencer_name: formData.influencer_name.trim() || null,
+            // influencer_name is resolved server-side from influencer_id
+            // (kept as a denormalized copy for list screens) -- no longer
+            // sent as free text here.
+            influencer_id: formData.influencer_id || null,
             payout_company_name: payoutEnabled ? (formData.payout_company_name.trim() || null) : null,
             payout_payment_method: payoutEnabled ? formData.payout_payment_method : null,
             payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null
@@ -229,10 +232,15 @@ window.ChallengeModal = function ChallengeModal({ challenge, onClose, onSave }) 
                                     className={inputCls} placeholder="https://example.com/challenge-banner.jpg" />
                             </div>
                             <div className="md:col-span-2">
-                                <label className={labelCls}>Influencer / Host Name</label>
-                                <input type="text" value={formData.influencer_name}
-                                    onChange={(e) => handleChange('influencer_name', e.target.value)}
-                                    className={inputCls} placeholder="e.g., Jane Doe" />
+                                <label className={labelCls}>Influencer / Host</label>
+                                <select value={formData.influencer_id}
+                                    onChange={(e) => handleChange('influencer_id', e.target.value)}
+                                    className={inputCls}>
+                                    <option value="">None</option>
+                                    {influencers.map(i => (
+                                        <option key={i.id} value={i.id}>{i.name} ({i.referral_code})</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>

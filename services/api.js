@@ -233,51 +233,10 @@ window.api = {
             },
             });
         }
-    },
-
-    // Influencers APIs
-    influencers: {
-        async getAll() {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/influencers`);
-        },
-
-        async getOne(influencerId) {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/influencer/${influencerId}`);
-        },
-
-        async create(data) {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/newinfluencer`, {
-                method: 'POST',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
-                'Content-Type': 'application/json',
-            },
-                body: JSON.stringify(data)
-            });
-        },
-
-        async update(influencerId, data) {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/influencer/${influencerId}`, {
-                method: 'PUT',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
-                'Content-Type': 'application/json',
-            },
-                body: JSON.stringify(data)
-            });
-        },
-
-        async delete(influencerId) {
-            return window.api.call(`${window.APP_CONFIG.API_BASE}/influencer/${influencerId}`, {
-                method: 'DELETE',
-                headers: {
-                'Authorization': `Basic ${window.ENV?.BASIC_AUTH || 'YWRtaW46c2ltcGxlaW5zaWdodGFkbWlu'}`,
-                // 'Content-Type' is already set in call(), but you can leave this if you want it explicit:
-                'Content-Type': 'application/json',
-            },
-            });
-        }
     }
+    // Influencers: retired here -- that was the old shop-coupon
+    // Influencers table (API_BASE/ecommanager), fully broken (mismatched
+    // field names end to end). The replacement, referral-code system
+    // lives in services/influencers-api.js (window.influencersAPI),
+    // hitting AUTH_BASE (users service) instead.
 };
