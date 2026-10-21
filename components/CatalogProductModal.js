@@ -107,6 +107,18 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const [newImageUrl, setNewImageUrl] = useState('');
     const [newDoc, setNewDoc] = useState({ label: '', file_url: '', type: 'brochure' });
 
+    // Pre-quote fields (requires_quote products only) -- the customer-facing
+    // questions (e.g. Vehicle Usage, Cover Amount) answered before an
+    // indicative result is shown. Fields and their own narrowing rules come
+    // embedded in products.getOne()'s response, same as variants/media.
+    const [prequoteFields, setPrequoteFields] = useState(product?.prequote_fields || []);
+    const [outcomeRules, setOutcomeRules] = useState(product?.prequote_outcome_rules || []);
+    const [newField, setNewField] = useState({ field_key: '', label: '', options: [{ label: '', value: '' }] });
+    // Keyed by field id -- the in-progress "narrow this field's options"
+    // rule being built for that field. Most fields never get one at all.
+    const [ruleDrafts, setRuleDrafts] = useState({});
+    const [outcomeDraft, setOutcomeDraft] = useState({ conditions: [{ field_key: '', value: '' }], result_title: '', result_description: '' });
+
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -341,6 +353,113 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const handleDeleteDocument = async (docId) => {
         const result = await window.catalogAPI.documents.delete(docId);
         if (result.status === '4000') refreshDocuments();
+    };
+
+    const refreshPreQuote = async () => {
+        const result = await window.catalogAPI.products.getOne(product.id);
+        if (result.status === '4000') {
+            setPrequoteFields(result.detail.prequote_fields || []);
+            setOutcomeRules(result.detail.prequote_outcome_rules || []);
+        }
+    };
+
+    const updateNewFieldOption = (idx, key, value) => {
+        setNewField(prev => ({ ...prev, options: prev.options.map((o, i) => (i === idx ? { ...o, [key]: value } : o)) }));
+    };
+    const addNewFieldOption = () => setNewField(prev => ({ ...prev, options: [...prev.options, { label: '', value: '' }] }));
+    const removeNewFieldOption = (idx) => setNewField(prev => ({ ...prev, options: prev.options.filter((_, i) => i !== idx) }));
+
+    const handleAddField = async () => {
+        const field_key = newField.field_key.trim();
+        const label = newField.label.trim();
+        const options = newField.options.filter(o => o.label.trim() && o.value.trim());
+        if (!field_key || !label || options.length === 0) {
+            alert('Provide a field key, a label, and at least one option.');
+            return;
+        }
+        const result = await window.catalogAPI.prequoteFields.create(product.id, {
+            field_key, label, options, sort_order: prequoteFields.length
+        });
+        if (result.status === '4000') {
+            setNewField({ field_key: '', label: '', options: [{ label: '', value: '' }] });
+            refreshPreQuote();
+        } else {
+            alert(result.message || 'Failed to add field');
+        }
+    };
+    const handleDeleteField = async (fieldId) => {
+        const result = await window.catalogAPI.prequoteFields.delete(fieldId);
+        if (result.status === '4000') refreshPreQuote();
+    };
+
+    const getRuleDraft = (fieldId) => ruleDrafts[fieldId] || { conditions: [{ field_key: '', value: '' }], allowed: [] };
+    const setRuleDraft = (fieldId, draft) => setRuleDrafts(prev => ({ ...prev, [fieldId]: draft }));
+    const addConditionRow = (fieldId) => {
+        const d = getRuleDraft(fieldId);
+        setRuleDraft(fieldId, { ...d, conditions: [...d.conditions, { field_key: '', value: '' }] });
+    };
+    const removeConditionRow = (fieldId, idx) => {
+        const d = getRuleDraft(fieldId);
+        setRuleDraft(fieldId, { ...d, conditions: d.conditions.filter((_, i) => i !== idx) });
+    };
+    const updateConditionRow = (fieldId, idx, key, value) => {
+        const d = getRuleDraft(fieldId);
+        setRuleDraft(fieldId, { ...d, conditions: d.conditions.map((c, i) => (i === idx ? { ...c, [key]: value } : c)) });
+    };
+    const toggleAllowedOption = (fieldId, value) => {
+        const d = getRuleDraft(fieldId);
+        const allowed = d.allowed.includes(value) ? d.allowed.filter(v => v !== value) : [...d.allowed, value];
+        setRuleDraft(fieldId, { ...d, allowed });
+    };
+    const handleAddRule = async (field) => {
+        const d = getRuleDraft(field.id);
+        const conditions = d.conditions.filter(c => c.field_key && c.value);
+        if (conditions.length === 0 || d.allowed.length === 0) {
+            alert("Add at least one condition and select which options are allowed when it's met.");
+            return;
+        }
+        const result = await window.catalogAPI.prequoteFieldRules.create(field.id, {
+            conditions, allowed_options: d.allowed, rule_order: (field.rules || []).length
+        });
+        if (result.status === '4000') {
+            setRuleDraft(field.id, { conditions: [{ field_key: '', value: '' }], allowed: [] });
+            refreshPreQuote();
+        } else {
+            alert(result.message || 'Failed to add rule');
+        }
+    };
+    const handleDeleteRule = async (ruleId) => {
+        const result = await window.catalogAPI.prequoteFieldRules.delete(ruleId);
+        if (result.status === '4000') refreshPreQuote();
+    };
+
+    const addOutcomeCondition = () => setOutcomeDraft(prev => ({ ...prev, conditions: [...prev.conditions, { field_key: '', value: '' }] }));
+    const removeOutcomeCondition = (idx) => setOutcomeDraft(prev => ({ ...prev, conditions: prev.conditions.filter((_, i) => i !== idx) }));
+    const updateOutcomeCondition = (idx, key, value) => {
+        setOutcomeDraft(prev => ({ ...prev, conditions: prev.conditions.map((c, i) => (i === idx ? { ...c, [key]: value } : c)) }));
+    };
+    const handleAddOutcome = async () => {
+        const conditions = outcomeDraft.conditions.filter(c => c.field_key && c.value);
+        if (conditions.length === 0 || !outcomeDraft.result_title.trim()) {
+            alert('Add at least one condition and a result title.');
+            return;
+        }
+        const result = await window.catalogAPI.prequoteOutcomeRules.create(product.id, {
+            conditions,
+            result_title: outcomeDraft.result_title.trim(),
+            result_description: outcomeDraft.result_description.trim() || null,
+            rule_order: outcomeRules.length
+        });
+        if (result.status === '4000') {
+            setOutcomeDraft({ conditions: [{ field_key: '', value: '' }], result_title: '', result_description: '' });
+            refreshPreQuote();
+        } else {
+            alert(result.message || 'Failed to add result rule');
+        }
+    };
+    const handleDeleteOutcome = async (ruleId) => {
+        const result = await window.catalogAPI.prequoteOutcomeRules.delete(ruleId);
+        if (result.status === '4000') refreshPreQuote();
     };
 
     const inputCls = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none";
@@ -617,6 +736,234 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                     For products like Drive Flexi where the customer must get a quote from an agent instead of seeing a fixed premium/cover. Hides the premium and topline figures below and shows a "Get a Personalized Quote" call to action on the storefront instead.
                                 </p>
                             </div>
+                            {formData.requires_quote && (
+                                <div className="mb-4">
+                                    {isEdit ? (
+                                        <div className="border border-gray-200 rounded-lg p-4 space-y-5">
+                                            <div>
+                                                <h4 className="font-semibold text-gray-800 mb-1">Pre-Quote Fields</h4>
+                                                <p className="text-xs text-gray-500 mb-3">
+                                                    Questions shown to the customer before this product's indicative result (e.g. Comprehensive vs Third Party). Answered in the order below -- a field can only be narrowed by one that comes before it.
+                                                </p>
+                                                <div className="space-y-3 mb-3">
+                                                    {prequoteFields.map((f, fieldIdx) => (
+                                                        <div key={f.id} className="bg-gray-50 rounded-lg p-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-sm font-medium text-gray-800">{f.label}</span>
+                                                                    <span className="text-xs text-gray-400 ml-2">key: {f.field_key}</span>
+                                                                </div>
+                                                                <button type="button" onClick={() => handleDeleteField(f.id)} className="text-gray-400 hover:text-red-500">
+                                                                    <window.Icons.Trash />
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {(f.options || []).map((o, i) => (
+                                                                    <span key={i} className="text-xs bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-600">{o.label}</span>
+                                                                ))}
+                                                            </div>
+
+                                                            {(f.rules || []).length > 0 && (
+                                                                <div className="mt-3 space-y-1">
+                                                                    {f.rules.map(r => (
+                                                                        <div key={r.id} className="flex items-center justify-between text-xs bg-white border border-gray-200 rounded px-2 py-1">
+                                                                            <span>
+                                                                                IF {r.conditions.map(c => `${c.field_key}=${c.value}`).join(' AND ')} &rarr; {r.allowed_options.join(', ')}
+                                                                            </span>
+                                                                            <button type="button" onClick={() => handleDeleteRule(r.id)} className="text-gray-400 hover:text-red-500 ml-2">
+                                                                                <window.Icons.X />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {fieldIdx > 0 && (
+                                                                <div className="mt-3 border-t border-gray-200 pt-2">
+                                                                    <p className="text-xs text-gray-500 mb-1">Narrow this field's options based on an earlier answer (optional)</p>
+                                                                    {getRuleDraft(f.id).conditions.map((c, cIdx) => (
+                                                                        <div key={cIdx} className="flex gap-2 items-center mb-1">
+                                                                            <select
+                                                                                value={c.field_key}
+                                                                                onChange={(e) => updateConditionRow(f.id, cIdx, 'field_key', e.target.value)}
+                                                                                className={`${inputCls} text-xs py-1`}
+                                                                            >
+                                                                                <option value="">If field...</option>
+                                                                                {prequoteFields.slice(0, fieldIdx).map(pf => (
+                                                                                    <option key={pf.field_key} value={pf.field_key}>{pf.label}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                            <span className="text-xs text-gray-400">=</span>
+                                                                            <select
+                                                                                value={c.value}
+                                                                                onChange={(e) => updateConditionRow(f.id, cIdx, 'value', e.target.value)}
+                                                                                className={`${inputCls} text-xs py-1`}
+                                                                            >
+                                                                                <option value="">value...</option>
+                                                                                {(prequoteFields.find(pf => pf.field_key === c.field_key)?.options || []).map(o => (
+                                                                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                            {getRuleDraft(f.id).conditions.length > 1 && (
+                                                                                <button type="button" onClick={() => removeConditionRow(f.id, cIdx)} className="text-gray-400 hover:text-red-500">
+                                                                                    <window.Icons.X />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                    <button type="button" onClick={() => addConditionRow(f.id)} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                                        + Add condition
+                                                                    </button>
+                                                                    <p className="text-xs text-gray-500 mt-2 mb-1">Then only allow these options:</p>
+                                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                                        {(f.options || []).map(o => (
+                                                                            <label key={o.value} className="flex items-center gap-1 text-xs bg-white border border-gray-200 rounded px-2 py-1 cursor-pointer">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={getRuleDraft(f.id).allowed.includes(o.value)}
+                                                                                    onChange={() => toggleAllowedOption(f.id, o.value)}
+                                                                                />
+                                                                                {o.label}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                    <button type="button" onClick={() => handleAddRule(f)} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                                                        Add rule
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="bg-white border border-dashed border-gray-300 rounded-lg p-3">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                                                        <input
+                                                            type="text"
+                                                            value={newField.field_key}
+                                                            onChange={(e) => setNewField(prev => ({ ...prev, field_key: e.target.value }))}
+                                                            className={`${inputCls} text-sm`}
+                                                            placeholder="Field key, e.g. cover_amount"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={newField.label}
+                                                            onChange={(e) => setNewField(prev => ({ ...prev, label: e.target.value }))}
+                                                            className={`${inputCls} text-sm`}
+                                                            placeholder="Label shown to customer, e.g. Cover Amount"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mb-1">Options for this field:</p>
+                                                    {newField.options.map((o, idx) => (
+                                                        <div key={idx} className="flex gap-2 items-center mb-1">
+                                                            <input
+                                                                type="text"
+                                                                value={o.label}
+                                                                onChange={(e) => updateNewFieldOption(idx, 'label', e.target.value)}
+                                                                className={`${inputCls} text-sm`}
+                                                                placeholder="Shown to customer, e.g. KES 10,000,000"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={o.value}
+                                                                onChange={(e) => updateNewFieldOption(idx, 'value', e.target.value)}
+                                                                className={`${inputCls} text-sm`}
+                                                                placeholder="Stored value, e.g. 10000000"
+                                                            />
+                                                            {newField.options.length > 1 && (
+                                                                <button type="button" onClick={() => removeNewFieldOption(idx)} className="text-gray-400 hover:text-red-500 flex-shrink-0">
+                                                                    <window.Icons.X />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    <button type="button" onClick={addNewFieldOption} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium block mb-2">
+                                                        + Add option
+                                                    </button>
+                                                    <button type="button" onClick={handleAddField} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+                                                        Add field
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-gray-200 pt-4">
+                                                <h4 className="font-semibold text-gray-800 mb-1">Result Rules</h4>
+                                                <p className="text-xs text-gray-500 mb-3">
+                                                    Once every field above is answered, these decide what the customer sees (e.g. "Comprehensive"). If nothing matches, the app tells the customer honestly instead of guessing.
+                                                </p>
+                                                <div className="space-y-1 mb-3">
+                                                    {outcomeRules.map(r => (
+                                                        <div key={r.id} className="flex items-center justify-between text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1">
+                                                            <span>
+                                                                IF {r.conditions.map(c => `${c.field_key}=${c.value}`).join(' AND ')} &rarr; <strong>{r.result_title}</strong>
+                                                            </span>
+                                                            <button type="button" onClick={() => handleDeleteOutcome(r.id)} className="text-gray-400 hover:text-red-500 ml-2">
+                                                                <window.Icons.X />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {prequoteFields.length > 0 && (
+                                                    <div className="bg-white border border-dashed border-gray-300 rounded-lg p-3">
+                                                        {outcomeDraft.conditions.map((c, idx) => (
+                                                            <div key={idx} className="flex gap-2 items-center mb-1">
+                                                                <select
+                                                                    value={c.field_key}
+                                                                    onChange={(e) => updateOutcomeCondition(idx, 'field_key', e.target.value)}
+                                                                    className={`${inputCls} text-xs py-1`}
+                                                                >
+                                                                    <option value="">If field...</option>
+                                                                    {prequoteFields.map(pf => (
+                                                                        <option key={pf.field_key} value={pf.field_key}>{pf.label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <span className="text-xs text-gray-400">=</span>
+                                                                <select
+                                                                    value={c.value}
+                                                                    onChange={(e) => updateOutcomeCondition(idx, 'value', e.target.value)}
+                                                                    className={`${inputCls} text-xs py-1`}
+                                                                >
+                                                                    <option value="">value...</option>
+                                                                    {(prequoteFields.find(pf => pf.field_key === c.field_key)?.options || []).map(o => (
+                                                                        <option key={o.value} value={o.value}>{o.label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                {outcomeDraft.conditions.length > 1 && (
+                                                                    <button type="button" onClick={() => removeOutcomeCondition(idx)} className="text-gray-400 hover:text-red-500">
+                                                                        <window.Icons.X />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        <button type="button" onClick={addOutcomeCondition} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium block mb-2">
+                                                            + Add condition
+                                                        </button>
+                                                        <input
+                                                            type="text"
+                                                            value={outcomeDraft.result_title}
+                                                            onChange={(e) => setOutcomeDraft(prev => ({ ...prev, result_title: e.target.value }))}
+                                                            className={`${inputCls} text-sm mb-2`}
+                                                            placeholder="Result shown to customer, e.g. Comprehensive"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={outcomeDraft.result_description}
+                                                            onChange={(e) => setOutcomeDraft(prev => ({ ...prev, result_description: e.target.value }))}
+                                                            className={`${inputCls} text-sm mb-2`}
+                                                            placeholder="Optional extra context shown with the result"
+                                                        />
+                                                        <button type="button" onClick={handleAddOutcome} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+                                                            Add result rule
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">Save this product first, then reopen it to add pre-quote fields.</p>
+                                    )}
+                                </div>
+                            )}
                             {!formData.requires_quote && (
                                 <div className="mb-4">
                                     <label className={labelCls}>

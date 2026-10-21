@@ -179,6 +179,71 @@ window.catalogAPI = {
         }
     },
 
+    // ---------------- Pre-quote fields (requires_quote products) ----------------
+    // No standalone getAll -- a product's fields (with their rules nested
+    // inside each one) come embedded in products.getOne()'s response
+    // (product.prequote_fields), same as variants above.
+    prequoteFields: {
+        async create(productId, data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ product_id: productId, ...data })
+            });
+        },
+
+        async update(fieldId, edits) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field`, {
+                method: 'PUT',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ id: fieldId, ...edits })
+            });
+        },
+
+        async delete(fieldId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field?id=${fieldId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
+    // ---------------- Pre-quote field rules (narrow a field's options) ----------------
+    prequoteFieldRules: {
+        async create(fieldId, data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field-rule`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ field_id: fieldId, ...data })
+            });
+        },
+
+        async delete(ruleId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field-rule?id=${ruleId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
+    // ---------------- Pre-quote outcome rules (the final result) ----------------
+    prequoteOutcomeRules: {
+        async create(productId, data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-outcome-rule`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ product_id: productId, ...data })
+            });
+        },
+
+        async delete(ruleId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-outcome-rule?id=${ruleId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
     // ---------------- Marketing banners (catalog top carousel) ----------------
     banners: {
         async getAll(filters = {}) {
