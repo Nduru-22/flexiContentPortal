@@ -113,11 +113,19 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     // embedded in products.getOne()'s response, same as variants/media.
     const [prequoteFields, setPrequoteFields] = useState(product?.prequote_fields || []);
     const [outcomeRules, setOutcomeRules] = useState(product?.prequote_outcome_rules || []);
-    const [newField, setNewField] = useState({ field_key: '', label: '', options: [{ label: '', value: '' }] });
+    const [newField, setNewField] = useState({ field_key: '', label: '', field_type: 'dropdown', options: [{ label: '', value: '', multiplier: '' }] });
     // Keyed by field id -- the in-progress "narrow this field's options"
     // rule being built for that field. Most fields never get one at all.
     const [ruleDrafts, setRuleDrafts] = useState({});
-    const [outcomeDraft, setOutcomeDraft] = useState({ conditions: [{ field_key: '', value: '' }], result_title: '', result_description: '' });
+    const [outcomeDraft, setOutcomeDraft] = useState({
+        conditions: [{ field_key: '', value: '' }],
+        result_title: '',
+        result_description: '',
+        premium_calc_type: '',
+        rate_field_key: '',
+        base_rate_percent: '',
+        flat_fee: ''
+    });
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -366,22 +374,36 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const updateNewFieldOption = (idx, key, value) => {
         setNewField(prev => ({ ...prev, options: prev.options.map((o, i) => (i === idx ? { ...o, [key]: value } : o)) }));
     };
-    const addNewFieldOption = () => setNewField(prev => ({ ...prev, options: [...prev.options, { label: '', value: '' }] }));
+    const addNewFieldOption = () => setNewField(prev => ({ ...prev, options: [...prev.options, { label: '', value: '', multiplier: '' }] }));
     const removeNewFieldOption = (idx) => setNewField(prev => ({ ...prev, options: prev.options.filter((_, i) => i !== idx) }));
 
     const handleAddField = async () => {
         const field_key = newField.field_key.trim();
         const label = newField.label.trim();
-        const options = newField.options.filter(o => o.label.trim() && o.value.trim());
-        if (!field_key || !label || options.length === 0) {
-            alert('Provide a field key, a label, and at least one option.');
+        // Number fields (e.g. car value) have no discrete options or
+        // multipliers -- they feed the premium formula directly as the
+        // base value, not as a lookup.
+        const isNumber = newField.field_type === 'number';
+        const options = isNumber ? [] : newField.options
+            .filter(o => o.label.trim() && o.value.trim())
+            .map(o => ({
+                label: o.label.trim(),
+                value: o.value.trim(),
+                // Omit entirely rather than send an empty string -- a
+                // missing multiplier means "doesn't affect the premium",
+                // distinct from an explicit x1 someone might want to
+                // change later.
+                ...(o.multiplier.toString().trim() ? { multiplier: parseFloat(o.multiplier) } : {})
+            }));
+        if (!field_key || !label || (!isNumber && options.length === 0)) {
+            alert(isNumber ? 'Provide a field key and a label.' : 'Provide a field key, a label, and at least one option.');
             return;
         }
         const result = await window.catalogAPI.prequoteFields.create(product.id, {
-            field_key, label, options, sort_order: prequoteFields.length
+            field_key, label, options, field_type: newField.field_type, sort_order: prequoteFields.length
         });
         if (result.status === '4000') {
-            setNewField({ field_key: '', label: '', options: [{ label: '', value: '' }] });
+            setNewField({ field_key: '', label: '', field_type: 'dropdown', options: [{ label: '', value: '', multiplier: '' }] });
             refreshPreQuote();
         } else {
             alert(result.message || 'Failed to add field');
@@ -444,14 +466,30 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
             alert('Add at least one condition and a result title.');
             return;
         }
+        const calcType = outcomeDraft.premium_calc_type || null;
+        if (calcType === 'percentage_of_field' && (!outcomeDraft.rate_field_key || !outcomeDraft.base_rate_percent.toString().trim())) {
+            alert('Pick which field is the base value and provide a base rate percentage.');
+            return;
+        }
+        if (calcType === 'flat_fee' && !outcomeDraft.flat_fee.toString().trim()) {
+            alert('Provide a flat fee.');
+            return;
+        }
         const result = await window.catalogAPI.prequoteOutcomeRules.create(product.id, {
             conditions,
             result_title: outcomeDraft.result_title.trim(),
             result_description: outcomeDraft.result_description.trim() || null,
-            rule_order: outcomeRules.length
+            rule_order: outcomeRules.length,
+            premium_calc_type: calcType,
+            rate_field_key: calcType === 'percentage_of_field' ? outcomeDraft.rate_field_key : null,
+            base_rate_percent: calcType === 'percentage_of_field' ? parseFloat(outcomeDraft.base_rate_percent) : null,
+            flat_fee: calcType === 'flat_fee' ? parseFloat(outcomeDraft.flat_fee) : null
         });
         if (result.status === '4000') {
-            setOutcomeDraft({ conditions: [{ field_key: '', value: '' }], result_title: '', result_description: '' });
+            setOutcomeDraft({
+                conditions: [{ field_key: '', value: '' }], result_title: '', result_description: '',
+                premium_calc_type: '', rate_field_key: '', base_rate_percent: '', flat_fee: ''
+            });
             refreshPreQuote();
         } else {
             alert(result.message || 'Failed to add result rule');
@@ -752,16 +790,25 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 <div>
                                                                     <span className="text-sm font-medium text-gray-800">{f.label}</span>
                                                                     <span className="text-xs text-gray-400 ml-2">key: {f.field_key}</span>
+                                                                    {f.field_type === 'number' && (
+                                                                        <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-1.5 py-0.5 ml-2">number</span>
+                                                                    )}
                                                                 </div>
                                                                 <button type="button" onClick={() => handleDeleteField(f.id)} className="text-gray-400 hover:text-red-500">
                                                                     <window.Icons.Trash />
                                                                 </button>
                                                             </div>
-                                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                                {(f.options || []).map((o, i) => (
-                                                                    <span key={i} className="text-xs bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-600">{o.label}</span>
-                                                                ))}
-                                                            </div>
+                                                            {f.field_type === 'number' ? (
+                                                                <p className="text-xs text-gray-500 mt-2">Free-entry number -- the customer types their own value.</p>
+                                                            ) : (
+                                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                                    {(f.options || []).map((o, i) => (
+                                                                        <span key={i} className="text-xs bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-600">
+                                                                            {o.label}{o.multiplier != null ? ` (x${o.multiplier})` : ''}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
 
                                                             {(f.rules || []).length > 0 && (
                                                                 <div className="mt-3 space-y-1">
@@ -778,7 +825,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 </div>
                                                             )}
 
-                                                            {fieldIdx > 0 && (
+                                                            {fieldIdx > 0 && f.field_type !== 'number' && (
                                                                 <div className="mt-3 border-t border-gray-200 pt-2">
                                                                     <p className="text-xs text-gray-500 mb-1">Narrow this field's options based on an earlier answer (optional)</p>
                                                                     {getRuleDraft(f.id).conditions.map((c, cIdx) => (
@@ -853,33 +900,69 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                             placeholder="Label shown to customer, e.g. Cover Amount"
                                                         />
                                                     </div>
-                                                    <p className="text-xs text-gray-500 mb-1">Options for this field:</p>
-                                                    {newField.options.map((o, idx) => (
-                                                        <div key={idx} className="flex gap-2 items-center mb-1">
+                                                    <div className="flex gap-4 mb-3">
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
                                                             <input
-                                                                type="text"
-                                                                value={o.label}
-                                                                onChange={(e) => updateNewFieldOption(idx, 'label', e.target.value)}
-                                                                className={`${inputCls} text-sm`}
-                                                                placeholder="Shown to customer, e.g. KES 10,000,000"
+                                                                type="radio"
+                                                                checked={newField.field_type === 'dropdown'}
+                                                                onChange={() => setNewField(prev => ({ ...prev, field_type: 'dropdown' }))}
                                                             />
+                                                            Dropdown (fixed options)
+                                                        </label>
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
                                                             <input
-                                                                type="text"
-                                                                value={o.value}
-                                                                onChange={(e) => updateNewFieldOption(idx, 'value', e.target.value)}
-                                                                className={`${inputCls} text-sm`}
-                                                                placeholder="Stored value, e.g. 10000000"
+                                                                type="radio"
+                                                                checked={newField.field_type === 'number'}
+                                                                onChange={() => setNewField(prev => ({ ...prev, field_type: 'number' }))}
                                                             />
-                                                            {newField.options.length > 1 && (
-                                                                <button type="button" onClick={() => removeNewFieldOption(idx)} className="text-gray-400 hover:text-red-500 flex-shrink-0">
-                                                                    <window.Icons.X />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                    <button type="button" onClick={addNewFieldOption} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium block mb-2">
-                                                        + Add option
-                                                    </button>
+                                                            Number (customer types a value, e.g. car value)
+                                                        </label>
+                                                    </div>
+                                                    {newField.field_type === 'dropdown' ? (
+                                                        <>
+                                                            <p className="text-xs text-gray-500 mb-1">
+                                                                Options for this field -- the optional multiplier scales the indicative premium when this option is picked (e.g. Commercial = 1.4). Leave blank if this field doesn't affect pricing.
+                                                            </p>
+                                                            {newField.options.map((o, idx) => (
+                                                                <div key={idx} className="flex gap-2 items-center mb-1">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={o.label}
+                                                                        onChange={(e) => updateNewFieldOption(idx, 'label', e.target.value)}
+                                                                        className={`${inputCls} text-sm`}
+                                                                        placeholder="Shown to customer, e.g. Commercial"
+                                                                    />
+                                                                    <input
+                                                                        type="text"
+                                                                        value={o.value}
+                                                                        onChange={(e) => updateNewFieldOption(idx, 'value', e.target.value)}
+                                                                        className={`${inputCls} text-sm`}
+                                                                        placeholder="Stored value, e.g. commercial"
+                                                                    />
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={o.multiplier}
+                                                                        onChange={(e) => updateNewFieldOption(idx, 'multiplier', e.target.value)}
+                                                                        className={`${inputCls} text-sm w-24 flex-shrink-0`}
+                                                                        placeholder="x1.4"
+                                                                    />
+                                                                    {newField.options.length > 1 && (
+                                                                        <button type="button" onClick={() => removeNewFieldOption(idx)} className="text-gray-400 hover:text-red-500 flex-shrink-0">
+                                                                            <window.Icons.X />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                            <button type="button" onClick={addNewFieldOption} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium block mb-2">
+                                                                + Add option
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-500 mb-3">
+                                                            No options needed -- the customer types a number directly (e.g. 325000). Reference this field's key as the base value in a Result Rule below.
+                                                        </p>
+                                                    )}
                                                     <button type="button" onClick={handleAddField} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
                                                         Add field
                                                     </button>
@@ -896,6 +979,12 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                         <div key={r.id} className="flex items-center justify-between text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1">
                                                             <span>
                                                                 IF {r.conditions.map(c => `${c.field_key}=${c.value}`).join(' AND ')} &rarr; <strong>{r.result_title}</strong>
+                                                                {r.premium_calc_type === 'percentage_of_field' && (
+                                                                    <span className="text-gray-500"> ({r.rate_field_key} &times; {r.base_rate_percent}% &times; multipliers)</span>
+                                                                )}
+                                                                {r.premium_calc_type === 'flat_fee' && (
+                                                                    <span className="text-gray-500"> (flat KES {r.flat_fee})</span>
+                                                                )}
                                                             </span>
                                                             <button type="button" onClick={() => handleDeleteOutcome(r.id)} className="text-gray-400 hover:text-red-500 ml-2">
                                                                 <window.Icons.X />
@@ -952,6 +1041,48 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                             className={`${inputCls} text-sm mb-2`}
                                                             placeholder="Optional extra context shown with the result"
                                                         />
+                                                        <p className="text-xs text-gray-500 mb-1">Indicative premium for this result (optional):</p>
+                                                        <select
+                                                            value={outcomeDraft.premium_calc_type}
+                                                            onChange={(e) => setOutcomeDraft(prev => ({ ...prev, premium_calc_type: e.target.value }))}
+                                                            className={`${inputCls} text-sm mb-2`}
+                                                        >
+                                                            <option value="">No premium -- just show the result</option>
+                                                            <option value="percentage_of_field">Percentage of a field's value (e.g. Comprehensive)</option>
+                                                            <option value="flat_fee">Flat fee (e.g. Third Party)</option>
+                                                        </select>
+                                                        {outcomeDraft.premium_calc_type === 'percentage_of_field' && (
+                                                            <div className="flex gap-2 items-center mb-2">
+                                                                <select
+                                                                    value={outcomeDraft.rate_field_key}
+                                                                    onChange={(e) => setOutcomeDraft(prev => ({ ...prev, rate_field_key: e.target.value }))}
+                                                                    className={`${inputCls} text-sm`}
+                                                                >
+                                                                    <option value="">Base value field...</option>
+                                                                    {prequoteFields.filter(pf => pf.field_type === 'number').map(pf => (
+                                                                        <option key={pf.field_key} value={pf.field_key}>{pf.label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    value={outcomeDraft.base_rate_percent}
+                                                                    onChange={(e) => setOutcomeDraft(prev => ({ ...prev, base_rate_percent: e.target.value }))}
+                                                                    className={`${inputCls} text-sm w-28 flex-shrink-0`}
+                                                                    placeholder="Rate %, e.g. 4"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {outcomeDraft.premium_calc_type === 'flat_fee' && (
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={outcomeDraft.flat_fee}
+                                                                onChange={(e) => setOutcomeDraft(prev => ({ ...prev, flat_fee: e.target.value }))}
+                                                                className={`${inputCls} text-sm mb-2`}
+                                                                placeholder="Flat fee, KES"
+                                                            />
+                                                        )}
                                                         <button type="button" onClick={handleAddOutcome} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
                                                             Add result rule
                                                         </button>
