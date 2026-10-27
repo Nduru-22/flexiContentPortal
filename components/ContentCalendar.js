@@ -65,6 +65,7 @@ window.ContentCalendar = function ContentCalendar() {
     const [notFound, setNotFound] = useState(false);
     const [view, setView] = useState('calendar');
     const [selectedPost, setSelectedPost] = useState(null);
+    const [showInspirationLightbox, setShowInspirationLightbox] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef(null);
@@ -120,6 +121,15 @@ window.ContentCalendar = function ContentCalendar() {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const openPost = (p) => {
+        setSelectedPost(p);
+        setShowInspirationLightbox(false);
+    };
+    const closePost = () => {
+        setSelectedPost(null);
+        setShowInspirationLightbox(false);
     };
 
     const sortedPosts = [...posts].sort((a, b) => {
@@ -234,7 +244,7 @@ window.ContentCalendar = function ContentCalendar() {
                                                         <button
                                                             key={idx}
                                                             type="button"
-                                                            onClick={() => setSelectedPost(p)}
+                                                            onClick={() => openPost(p)}
                                                             className={`w-full text-left px-1.5 py-1 rounded text-[11px] font-medium truncate ${style.badge} hover:opacity-80 transition`}
                                                             title={p.title}
                                                         >
@@ -258,7 +268,7 @@ window.ContentCalendar = function ContentCalendar() {
                             <button
                                 key={idx}
                                 type="button"
-                                onClick={() => setSelectedPost(p)}
+                                onClick={() => openPost(p)}
                                 className="w-full flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition text-left"
                             >
                                 <div className="flex-shrink-0 w-16 text-center">
@@ -283,7 +293,7 @@ window.ContentCalendar = function ContentCalendar() {
                             <span className={`px-2 py-1 rounded text-xs font-medium ${platformStyle(selectedPost.platform).badge}`}>
                                 {platformStyle(selectedPost.platform).emoji} {selectedPost.platform || 'N/A'}
                             </span>
-                            <button onClick={() => setSelectedPost(null)} className="text-gray-500 hover:text-gray-700">
+                            <button onClick={() => closePost()} className="text-gray-500 hover:text-gray-700">
                                 <window.Icons.X />
                             </button>
                         </div>
@@ -295,6 +305,23 @@ window.ContentCalendar = function ContentCalendar() {
                                     {selectedPost.format ? ` · ${selectedPost.format}` : ''}
                                 </p>
                             </div>
+                            {selectedPost.inspiration_url && (
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Inspiration — click to see it bigger</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInspirationLightbox(true)}
+                                        className="block w-full rounded-lg overflow-hidden border border-gray-200 hover:border-indigo-300 transition"
+                                    >
+                                        <img
+                                            src={selectedPost.inspiration_url}
+                                            alt="Inspiration"
+                                            className="w-full h-40 object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    </button>
+                                </div>
+                            )}
                             {selectedPost.artwork_suggestion && (
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Artwork / Video Suggestion</p>
@@ -322,13 +349,35 @@ window.ContentCalendar = function ContentCalendar() {
                         </div>
                         <div className="border-t px-6 py-4">
                             <button
-                                onClick={() => setSelectedPost(null)}
+                                onClick={() => closePost()}
                                 className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
                             >
                                 Close
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Inspiration lightbox -- full-size look at what the post is meant to look like */}
+            {showInspirationLightbox && selectedPost?.inspiration_url && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[60] fade-in"
+                    onClick={() => setShowInspirationLightbox(false)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setShowInspirationLightbox(false)}
+                        className="absolute top-4 right-4 text-white hover:opacity-80 transition"
+                    >
+                        <window.Icons.X size={28} />
+                    </button>
+                    <img
+                        src={selectedPost.inspiration_url}
+                        alt="Inspiration"
+                        className="max-w-full max-h-full rounded-lg object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                    />
                 </div>
             )}
         </div>
