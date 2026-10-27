@@ -113,8 +113,8 @@ window.Discounts = function Discounts() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredDiscounts.map(discount => {
-                            const isActive = new Date(discount.valid_until) > new Date();
-                            const usagePercent = discount.max_uses ? (discount.uses_count / discount.max_uses) * 100 : 0;
+                            const isActive = new Date(discount.end_date) > new Date();
+                            const usagePercent = discount.max_usage ? (discount.current_usage / discount.max_usage) * 100 : 0;
                             
                             return (
                                 <div key={discount.code} className="bg-white rounded-xl shadow-md p-6 card-hover">
@@ -158,23 +158,29 @@ window.Discounts = function Discounts() {
                                             </div>
                                         )}
                                         
-                                        {discount.max_uses && (
+                                        {discount.max_usage && (
                                             <div>
                                                 <div className="flex justify-between items-center text-sm mb-1">
                                                     <span className="text-gray-600">Usage:</span>
-                                                    <span className="font-medium">{discount.uses_count || 0} / {discount.max_uses}</span>
+                                                    <span className="font-medium">{discount.current_usage || 0} / {discount.max_usage}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                                    <div 
+                                                    <div
                                                         className="bg-green-600 h-2 rounded-full transition-all"
                                                         style={{ width: `${Math.min(usagePercent, 100)}%` }}
                                                     />
                                                 </div>
                                             </div>
                                         )}
-                                        
+
+                                        {(discount.applicable_products?.length > 0 || discount.applicable_content?.length > 0) && (
+                                            <div className="text-xs text-gray-500">
+                                                🎯 Scoped to {(discount.applicable_products?.length || 0) + (discount.applicable_content?.length || 0)} item(s)
+                                            </div>
+                                        )}
+
                                         <div className="text-xs text-gray-500 pt-2 border-t">
-                                            Valid until: {new Date(discount.valid_until).toLocaleDateString()}
+                                            Valid until: {new Date(discount.end_date).toLocaleDateString()}
                                         </div>
                                     </div>
                                     
