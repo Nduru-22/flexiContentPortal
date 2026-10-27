@@ -74,6 +74,8 @@ function App() {
             setCurrentView('catalog-items');
         } else if (section === 'influencers') {
             setCurrentView('influencers');
+        } else if (section === 'social') {
+            setCurrentView('social');
         }
     };
 
@@ -131,6 +133,11 @@ function App() {
         { id: 'influencers', label: '👥 Influencers', component: window.Influencers }
     ];
 
+    // Social media content calendar -- single screen, no sub-tabs of its own.
+    const socialNavItems = [
+        { id: 'social', label: '📣 Social Media', component: window.ContentCalendar }
+    ];
+
     const sectionNavItems = {
         shop: shopNavItems,
         content: contentNavItems,
@@ -138,7 +145,8 @@ function App() {
         plans: plansNavItems,
         challenges: challengesNavItems,
         items: itemsNavItems,
-        influencers: influencersNavItems
+        influencers: influencersNavItems,
+        social: socialNavItems
     };
     const sectionDefaultComponent = {
         shop: Dashboard,
@@ -147,7 +155,8 @@ function App() {
         plans: window.CatalogPartners,
         challenges: window.Challenges,
         items: window.CatalogItemTemplates,
-        influencers: window.Influencers
+        influencers: window.Influencers,
+        social: window.ContentCalendar
     };
 
     const currentNavItems = sectionNavItems[currentSection];
@@ -237,6 +246,16 @@ function App() {
                                     }`}
                                 >
                                     👥 Influencers
+                                </button>
+                                <button
+                                    onClick={() => handleSectionChange('social')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                        currentSection === 'social'
+                                            ? 'bg-white text-pink-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    📣 Social Media
                                 </button>
                             </div>
                         </div>
