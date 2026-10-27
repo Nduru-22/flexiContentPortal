@@ -325,7 +325,17 @@ window.ContentCalendar = function ContentCalendar() {
                             {selectedPost.artwork_suggestion && (
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Artwork / Video Suggestion</p>
-                                    <p className="text-gray-700 text-sm bg-gray-50 border border-gray-200 rounded-lg p-3">{selectedPost.artwork_suggestion}</p>
+                                    <div className="text-gray-700 text-sm bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        {Array.isArray(selectedPost.artwork_suggestion) ? (
+                                            <ol className="list-decimal list-inside space-y-1.5">
+                                                {selectedPost.artwork_suggestion.map((line, i) => (
+                                                    <li key={i}>{line}</li>
+                                                ))}
+                                            </ol>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap">{selectedPost.artwork_suggestion}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {selectedPost.caption && (
