@@ -10,6 +10,19 @@ window.InfluencerModal = function InfluencerModal({ influencer, onClose, onSave 
         status: influencer?.status || 'active'
     });
 
+    // Auto-suggest a referral code from the name (first name + this year,
+    // e.g. "JANE2025") for a new influencer -- still fully editable, since
+    // this is a real code shared publicly, not an arbitrary system id.
+    const handleNameChange = (value) => {
+        const firstWord = value.trim().split(/\s+/)[0] || '';
+        const suggested = (firstWord.replace(/[^a-zA-Z0-9]/g, '') + new Date().getFullYear()).toUpperCase();
+        setFormData(prev => ({
+            ...prev,
+            name: value,
+            referral_code: isEdit ? prev.referral_code : suggested,
+        }));
+    };
+
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -66,7 +79,7 @@ window.InfluencerModal = function InfluencerModal({ influencer, onClose, onSave 
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            onChange={(e) => handleNameChange(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none"
                             required
                         />
@@ -74,7 +87,7 @@ window.InfluencerModal = function InfluencerModal({ influencer, onClose, onSave 
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Referral Code *
+                            Referral Code * <span className="text-xs text-gray-400">(suggested from the name, but you should change it to whatever they'll actually share)</span>
                         </label>
                         <input
                             type="text"

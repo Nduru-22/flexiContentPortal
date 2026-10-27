@@ -61,6 +61,17 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    // Auto-slug the pid from the name for a new product -- editable in
+    // case the admin wants a specific id, same convention as uid in the
+    // common-items catalog.
+    const handleNameChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            product_name: value,
+            pid: product ? prev.pid : value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        }));
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 fade-in">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -83,13 +94,13 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
                         {/* Product ID */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Product ID *
+                                Product ID * <span className="text-xs text-gray-400">(auto-filled from the name, but can be edited)</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.pid}
                                 onChange={(e) => handleChange('pid', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none disabled:bg-gray-100"
                                 required
                                 disabled={!!product}
                             />
@@ -103,7 +114,7 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
                             <input
                                 type="text"
                                 value={formData.product_name}
-                                onChange={(e) => handleChange('product_name', e.target.value)}
+                                onChange={(e) => handleNameChange(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                                 required
                             />

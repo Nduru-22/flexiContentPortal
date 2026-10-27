@@ -124,6 +124,17 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    // Auto-slug the content_id from the title for new content -- editable
+    // in case the admin wants a specific id, same convention as the
+    // budget uid above.
+    const handleTitleChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            title: value,
+            content_id: isEdit ? prev.content_id : slugify(value),
+        }));
+    };
+
     // ── Series video row helpers ────────────────────────────────────────
     const updateVideo = (idx, field, value) => {
         setSeriesVideos(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value } : v));
@@ -329,7 +340,9 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className={labelCls}>Content ID *</label>
+                            <label className={labelCls}>
+                                Content ID * <span className="text-xs text-gray-400">(auto-filled from the title below, but can be edited)</span>
+                            </label>
                             <input type="text" value={formData.content_id}
                                 onChange={(e) => handleChange('content_id', e.target.value)}
                                 className={inputCls} required disabled={isEdit} />
@@ -347,7 +360,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                         <div className="md:col-span-2">
                             <label className={labelCls}>Title *</label>
                             <input type="text" value={formData.title}
-                                onChange={(e) => handleChange('title', e.target.value)}
+                                onChange={(e) => handleTitleChange(e.target.value)}
                                 className={inputCls} required />
                         </div>
                         <div className="md:col-span-2">
