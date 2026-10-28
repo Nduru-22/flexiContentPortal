@@ -344,6 +344,12 @@ window.ContentCalendar = function ContentCalendar() {
                                     <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedPost.caption}</p>
                                 </div>
                             )}
+                            {selectedPost.sample_caption && (
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Caption Inspiration <span className="font-normal text-gray-400">(sample tone/style — not the final text)</span></p>
+                                    <p className="text-gray-500 text-sm italic whitespace-pre-wrap bg-gray-50 border border-dashed border-gray-300 rounded-lg p-3">{selectedPost.sample_caption}</p>
+                                </div>
+                            )}
                             {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Hashtags</p>
