@@ -65,7 +65,6 @@ window.ContentCalendar = function ContentCalendar() {
     const [notFound, setNotFound] = useState(false);
     const [view, setView] = useState('calendar');
     const [selectedPost, setSelectedPost] = useState(null);
-    const [showInspirationLightbox, setShowInspirationLightbox] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef(null);
@@ -123,14 +122,8 @@ window.ContentCalendar = function ContentCalendar() {
         }
     };
 
-    const openPost = (p) => {
-        setSelectedPost(p);
-        setShowInspirationLightbox(false);
-    };
-    const closePost = () => {
-        setSelectedPost(null);
-        setShowInspirationLightbox(false);
-    };
+    const openPost = (p) => setSelectedPost(p);
+    const closePost = () => setSelectedPost(null);
 
     const sortedPosts = [...posts].sort((a, b) => {
         const aKey = `${a.date || ''} ${a.time || ''}`;
@@ -305,23 +298,34 @@ window.ContentCalendar = function ContentCalendar() {
                                     {selectedPost.format ? ` · ${selectedPost.format}` : ''}
                                 </p>
                             </div>
-                            {selectedPost.inspiration_url && (
-                                <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Inspiration — click to see it bigger</p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowInspirationLightbox(true)}
-                                        className="block w-full rounded-lg overflow-hidden border border-gray-200 hover:border-indigo-300 transition"
-                                    >
-                                        <img
-                                            src={selectedPost.inspiration_url}
-                                            alt="Inspiration"
-                                            className="w-full h-40 object-cover"
-                                            onError={(e) => { e.target.style.display = 'none'; }}
-                                        />
-                                    </button>
-                                </div>
-                            )}
+                            {(() => {
+                                const inspirationLinks = [selectedPost.inspiration_url, ...(selectedPost.more_inspiration_urls || [])].filter(Boolean);
+                                if (inspirationLinks.length === 0) return null;
+                                // These are usually links to someone else's post (Instagram, TikTok,
+                                // etc.), not direct image files -- rendering them as <img> silently
+                                // fails since a post page isn't an image. Open-in-new-tab works
+                                // correctly either way, including the rare case of a real image URL.
+                                return (
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                            Inspiration{inspirationLinks.length > 1 ? ` (${inspirationLinks.length})` : ''}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {inspirationLinks.map((url, i) => (
+                                                <a
+                                                    key={i}
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition"
+                                                >
+                                                    🔗 {inspirationLinks.length > 1 ? `Inspiration ${i + 1}` : 'Open inspiration'} ↗
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             {selectedPost.artwork_suggestion && (
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Artwork / Video Suggestion</p>
@@ -375,27 +379,6 @@ window.ContentCalendar = function ContentCalendar() {
                 </div>
             )}
 
-            {/* Inspiration lightbox -- full-size look at what the post is meant to look like */}
-            {showInspirationLightbox && selectedPost?.inspiration_url && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[60] fade-in"
-                    onClick={() => setShowInspirationLightbox(false)}
-                >
-                    <button
-                        type="button"
-                        onClick={() => setShowInspirationLightbox(false)}
-                        className="absolute top-4 right-4 text-white hover:opacity-80 transition"
-                    >
-                        <window.Icons.X size={28} />
-                    </button>
-                    <img
-                        src={selectedPost.inspiration_url}
-                        alt="Inspiration"
-                        className="max-w-full max-h-full rounded-lg object-contain"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
         </div>
     );
 };
