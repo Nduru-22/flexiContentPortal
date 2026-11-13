@@ -48,7 +48,13 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
         influencer_id: challenge?.influencer_id || '',
         payout_company_name: challenge?.payout_company_name || '',
         payout_payment_method: challenge?.payout_payment_method || 'paybill',
-        payout_payment_identifier: challenge?.payout_payment_identifier || ''
+        payout_payment_identifier: challenge?.payout_payment_identifier || '',
+        // Set only when this directed challenge requires opening an
+        // account with the investment company before contributing --
+        // e.g. a SACCO membership form. Left blank, the challenge just
+        // has a payout destination with no extra sign-up step.
+        signup_form_url: challenge?.signup_form_url || '',
+        signup_form_label: challenge?.signup_form_label || ''
     });
     const [payoutEnabled, setPayoutEnabled] = useState(hasPayout);
 
@@ -94,7 +100,9 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
             influencer_id: formData.influencer_id || null,
             payout_company_name: payoutEnabled ? (formData.payout_company_name.trim() || null) : null,
             payout_payment_method: payoutEnabled ? formData.payout_payment_method : null,
-            payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null
+            payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null,
+            signup_form_url: payoutEnabled ? (formData.signup_form_url.trim() || null) : null,
+            signup_form_label: payoutEnabled ? (formData.signup_form_label.trim() || null) : null
         };
 
         setSaving(true);
@@ -286,6 +294,18 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
                                     <input type="text" value={formData.payout_payment_identifier}
                                         onChange={(e) => handleChange('payout_payment_identifier', e.target.value)}
                                         className={inputCls} placeholder="e.g., 123456" />
+                                </div>
+                                <div className="border-t border-amber-200 pt-3">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                                        <span>Sign-up form (optional)</span>
+                                        <span className="text-xs font-normal text-gray-500">— only if this investment company requires opening an account there first</span>
+                                    </label>
+                                    <input type="url" value={formData.signup_form_url}
+                                        onChange={(e) => handleChange('signup_form_url', e.target.value)}
+                                        className={`${inputCls} mb-2`} placeholder="https://... link to the sign-up/membership form" />
+                                    <input type="text" value={formData.signup_form_label}
+                                        onChange={(e) => handleChange('signup_form_label', e.target.value)}
+                                        className={inputCls} placeholder="Button label shown to the customer, e.g. Open a Mizani account" />
                                 </div>
                             </div>
                         ) : (
