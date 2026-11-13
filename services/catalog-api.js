@@ -179,6 +179,43 @@ window.catalogAPI = {
         }
     },
 
+    // ---------------- Pre-quote field library (reusable across products) ----------------
+    // A template is just a saved starting point -- "attach" it to a
+    // product by calling prequoteFields.create() below with the
+    // template's own data copied in (see CatalogProductModal's
+    // handleAttachTemplate). There's no separate attach endpoint: the
+    // resulting field is independent of the template from then on.
+    prequoteFieldTemplates: {
+        async getAll() {
+            return window.api.call(`${window.APP_CONFIG.GETTER_API_BASE}/prequote-field-templates`, {
+                headers: window.catalogAPI._authHeaders()
+            });
+        },
+
+        async create(data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field-template`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify(data)
+            });
+        },
+
+        async update(templateId, edits) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field-template`, {
+                method: 'PUT',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ id: templateId, ...edits })
+            });
+        },
+
+        async delete(templateId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-field-template?id=${templateId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
     // ---------------- Pre-quote fields (requires_quote products) ----------------
     // No standalone getAll -- a product's fields (with their rules nested
     // inside each one) come embedded in products.getOne()'s response

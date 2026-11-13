@@ -122,6 +122,17 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     // this decides whether the field renders AT ALL, not which of its own
     // options are allowed.
     const [visibilityDrafts, setVisibilityDrafts] = useState({});
+    // The reusable field library -- define a field once, attach it to any
+    // product from then on instead of retyping the same options/rules
+    // every time. Loaded once; refreshed after saving a new one.
+    const [fieldTemplates, setFieldTemplates] = useState([]);
+    const [selectedTemplateId, setSelectedTemplateId] = useState('');
+
+    const refreshTemplates = async () => {
+        const result = await window.catalogAPI.prequoteFieldTemplates.getAll();
+        if (result.status === '4000') setFieldTemplates(result.detail || []);
+    };
+    useEffect(() => { refreshTemplates(); }, []);
     const [outcomeDraft, setOutcomeDraft] = useState({
         conditions: [{ field_key: '', value: '' }],
         result_title: '',
@@ -419,6 +430,54 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const handleDeleteField = async (fieldId) => {
         const result = await window.catalogAPI.prequoteFields.delete(fieldId);
         if (result.status === '4000') refreshPreQuote();
+    };
+
+    // Attaching a template just creates a normal field with the template's
+    // data copied in -- there's no link kept to the template afterward,
+    // same relationship a form template usually has to the forms made from it.
+    const handleAttachTemplate = async () => {
+        const tpl = fieldTemplates.find(t => String(t.id) === String(selectedTemplateId));
+        if (!tpl) return;
+        const result = await window.catalogAPI.prequoteFields.create(product.id, {
+            field_key: tpl.field_key,
+            label: tpl.label,
+            field_type: tpl.field_type,
+            options: tpl.options || [],
+            required: tpl.required,
+            section: tpl.section,
+            sort_order: prequoteFields.length
+        });
+        if (result.status === '4000') {
+            setSelectedTemplateId('');
+            refreshPreQuote();
+        } else {
+            alert(result.message || 'Failed to attach field from library');
+        }
+    };
+
+    // The inverse -- save an already-created field as a template so it can
+    // be reused on other products. The field itself is untouched; this
+    // only copies its current data into the library.
+    const handleSaveFieldAsTemplate = async (field) => {
+        const result = await window.catalogAPI.prequoteFieldTemplates.create({
+            field_key: field.field_key,
+            label: field.label,
+            field_type: field.field_type,
+            options: field.options || [],
+            required: field.required,
+            section: field.section
+        });
+        if (result.status === '4000') {
+            refreshTemplates();
+        } else {
+            alert(result.message || 'Failed to save field to library');
+        }
+    };
+
+    const handleDeleteTemplate = async (templateId) => {
+        if (!confirm('Remove this field from the library? Products that already attached it keep their own copy.')) return;
+        const result = await window.catalogAPI.prequoteFieldTemplates.delete(templateId);
+        if (result.status === '4000') refreshTemplates();
     };
 
     const getRuleDraft = (fieldId) => ruleDrafts[fieldId] || { conditions: [{ field_key: '', value: '' }], allowed: [] };
@@ -843,9 +902,19 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                         <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded px-1.5 py-0.5 ml-2">{f.section}</span>
                                                                     )}
                                                                 </div>
-                                                                <button type="button" onClick={() => handleDeleteField(f.id)} className="text-gray-400 hover:text-red-500">
-                                                                    <window.Icons.Trash />
-                                                                </button>
+                                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleSaveFieldAsTemplate(f)}
+                                                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap"
+                                                                        title="Save this field to the reusable library"
+                                                                    >
+                                                                        + Save to library
+                                                                    </button>
+                                                                    <button type="button" onClick={() => handleDeleteField(f.id)} className="text-gray-400 hover:text-red-500">
+                                                                        <window.Icons.Trash />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                             {f.field_type === 'number' ? (
                                                                 <p className="text-xs text-gray-500 mt-2">Free-entry number -- the customer types their own value.</p>
@@ -1017,6 +1086,39 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                         </div>
                                                     ))}
                                                 </div>
+
+                                                {fieldTemplates.length > 0 && (
+                                                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3 flex items-center gap-2">
+                                                        <select
+                                                            value={selectedTemplateId}
+                                                            onChange={(e) => setSelectedTemplateId(e.target.value)}
+                                                            className={`${inputCls} text-sm flex-1`}
+                                                        >
+                                                            <option value="">Pick from the field library...</option>
+                                                            {fieldTemplates.map(t => (
+                                                                <option key={t.id} value={t.id}>{t.label} ({t.field_type})</option>
+                                                            ))}
+                                                        </select>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleAttachTemplate}
+                                                            disabled={!selectedTemplateId}
+                                                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                                                        >
+                                                            Attach
+                                                        </button>
+                                                        {selectedTemplateId && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteTemplate(selectedTemplateId)}
+                                                                className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                                                                title="Remove from library"
+                                                            >
+                                                                <window.Icons.Trash />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 <div className="bg-white border border-dashed border-gray-300 rounded-lg p-3">
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
