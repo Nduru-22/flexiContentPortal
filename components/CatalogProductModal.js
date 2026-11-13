@@ -853,6 +853,8 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 <p className="text-xs text-gray-500 mt-2">Yes/No switch.</p>
                                                             ) : f.field_type === 'date' ? (
                                                                 <p className="text-xs text-gray-500 mt-2">Customer picks a date.</p>
+                                                            ) : f.field_type === 'text' ? (
+                                                                <p className="text-xs text-gray-500 mt-2">Free-text disclosure -- sent along with the quote, never used in a rule.</p>
                                                             ) : (
                                                                 <div className="flex flex-wrap gap-1 mt-2">
                                                                     {(f.options || []).map((o, i) => (
@@ -1066,6 +1068,14 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                             />
                                                             Date
                                                         </label>
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                checked={newField.field_type === 'text'}
+                                                                onChange={() => setNewField(prev => ({ ...prev, field_type: 'text' }))}
+                                                            />
+                                                            Free text (disclosure -- e.g. pre-existing conditions; never used in a rule)
+                                                        </label>
                                                     </div>
                                                     <div className="flex items-center gap-4 mb-3">
                                                         <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
@@ -1132,9 +1142,13 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                         <p className="text-xs text-gray-500 mb-3">
                                                             A Yes/No switch -- no options needed.
                                                         </p>
-                                                    ) : (
+                                                    ) : newField.field_type === 'date' ? (
                                                         <p className="text-xs text-gray-500 mb-3">
                                                             Customer picks a date -- no options needed.
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-500 mb-3">
+                                                            Customer types free text (e.g. pre-existing conditions) -- no options needed, and never usable as a rule condition since it has no fixed values to match. Sent along with the quote for the agent to read.
                                                         </p>
                                                     )}
                                                     <button type="button" onClick={handleAddField} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
