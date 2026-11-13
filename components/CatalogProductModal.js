@@ -113,10 +113,15 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     // embedded in products.getOne()'s response, same as variants/media.
     const [prequoteFields, setPrequoteFields] = useState(product?.prequote_fields || []);
     const [outcomeRules, setOutcomeRules] = useState(product?.prequote_outcome_rules || []);
-    const [newField, setNewField] = useState({ field_key: '', label: '', field_type: 'dropdown', options: [{ label: '', value: '', multiplier: '' }] });
+    const [newField, setNewField] = useState({ field_key: '', label: '', field_type: 'dropdown', required: true, section: '', options: [{ label: '', value: '', multiplier: '' }] });
     // Keyed by field id -- the in-progress "narrow this field's options"
     // rule being built for that field. Most fields never get one at all.
     const [ruleDrafts, setRuleDrafts] = useState({});
+    // Keyed by field id -- the in-progress "show this field only when..."
+    // rule being built for that field. Separate from ruleDrafts above:
+    // this decides whether the field renders AT ALL, not which of its own
+    // options are allowed.
+    const [visibilityDrafts, setVisibilityDrafts] = useState({});
     const [outcomeDraft, setOutcomeDraft] = useState({
         conditions: [{ field_key: '', value: '' }],
         result_title: '',
@@ -380,11 +385,12 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
     const handleAddField = async () => {
         const field_key = newField.field_key.trim();
         const label = newField.label.trim();
-        // Number fields (e.g. car value) have no discrete options or
-        // multipliers -- they feed the premium formula directly as the
-        // base value, not as a lookup.
-        const isNumber = newField.field_type === 'number';
-        const options = isNumber ? [] : newField.options
+        // Only a dropdown has a discrete option list/multipliers -- number
+        // (customer types a value), toggle (plain yes/no), and date
+        // (customer picks a date) all feed the premium formula or a rule
+        // condition directly, with nothing to pick from.
+        const needsOptions = newField.field_type === 'dropdown';
+        const options = !needsOptions ? [] : newField.options
             .filter(o => o.label.trim() && o.value.trim())
             .map(o => ({
                 label: o.label.trim(),
@@ -395,15 +401,16 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                 // change later.
                 ...(o.multiplier.toString().trim() ? { multiplier: parseFloat(o.multiplier) } : {})
             }));
-        if (!field_key || !label || (!isNumber && options.length === 0)) {
-            alert(isNumber ? 'Provide a field key and a label.' : 'Provide a field key, a label, and at least one option.');
+        if (!field_key || !label || (needsOptions && options.length === 0)) {
+            alert(needsOptions ? 'Provide a field key, a label, and at least one option.' : 'Provide a field key and a label.');
             return;
         }
         const result = await window.catalogAPI.prequoteFields.create(product.id, {
-            field_key, label, options, field_type: newField.field_type, sort_order: prequoteFields.length
+            field_key, label, options, field_type: newField.field_type, sort_order: prequoteFields.length,
+            required: newField.required, section: newField.section.trim() || null
         });
         if (result.status === '4000') {
-            setNewField({ field_key: '', label: '', field_type: 'dropdown', options: [{ label: '', value: '', multiplier: '' }] });
+            setNewField({ field_key: '', label: '', field_type: 'dropdown', required: true, section: '', options: [{ label: '', value: '', multiplier: '' }] });
             refreshPreQuote();
         } else {
             alert(result.message || 'Failed to add field');

@@ -226,6 +226,25 @@ window.catalogAPI = {
         }
     },
 
+    // ---------------- Pre-quote visibility rules (show/hide a whole field,
+    // as opposed to prequoteFieldRules narrowing its option list) ----------------
+    prequoteVisibilityRules: {
+        async create(fieldId, data) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-visibility-rule`, {
+                method: 'POST',
+                headers: window.catalogAPI._authHeaders(),
+                body: JSON.stringify({ field_id: fieldId, ...data })
+            });
+        },
+
+        async delete(ruleId) {
+            return window.api.call(`${window.APP_CONFIG.MAKER_API_BASE}/prequote-visibility-rule?id=${ruleId}`, {
+                method: 'DELETE',
+                headers: window.catalogAPI._authHeaders()
+            });
+        }
+    },
+
     // ---------------- Pre-quote outcome rules (the final result) ----------------
     prequoteOutcomeRules: {
         async create(productId, data) {
