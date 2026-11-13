@@ -462,6 +462,42 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
         if (result.status === '4000') refreshPreQuote();
     };
 
+    const getVisibilityDraft = (fieldId) => visibilityDrafts[fieldId] || { conditions: [{ field_key: '', value: '' }] };
+    const setVisibilityDraft = (fieldId, draft) => setVisibilityDrafts(prev => ({ ...prev, [fieldId]: draft }));
+    const addVisibilityConditionRow = (fieldId) => {
+        const d = getVisibilityDraft(fieldId);
+        setVisibilityDraft(fieldId, { ...d, conditions: [...d.conditions, { field_key: '', value: '' }] });
+    };
+    const removeVisibilityConditionRow = (fieldId, idx) => {
+        const d = getVisibilityDraft(fieldId);
+        setVisibilityDraft(fieldId, { ...d, conditions: d.conditions.filter((_, i) => i !== idx) });
+    };
+    const updateVisibilityConditionRow = (fieldId, idx, key, value) => {
+        const d = getVisibilityDraft(fieldId);
+        setVisibilityDraft(fieldId, { ...d, conditions: d.conditions.map((c, i) => (i === idx ? { ...c, [key]: value } : c)) });
+    };
+    const handleAddVisibilityRule = async (field) => {
+        const d = getVisibilityDraft(field.id);
+        const conditions = d.conditions.filter(c => c.field_key && c.value);
+        if (conditions.length === 0) {
+            alert('Add at least one condition for when this field should show.');
+            return;
+        }
+        const result = await window.catalogAPI.prequoteVisibilityRules.create(field.id, {
+            conditions, rule_order: (field.visibility_rules || []).length
+        });
+        if (result.status === '4000') {
+            setVisibilityDraft(field.id, { conditions: [{ field_key: '', value: '' }] });
+            refreshPreQuote();
+        } else {
+            alert(result.message || 'Failed to add visibility rule');
+        }
+    };
+    const handleDeleteVisibilityRule = async (ruleId) => {
+        const result = await window.catalogAPI.prequoteVisibilityRules.delete(ruleId);
+        if (result.status === '4000') refreshPreQuote();
+    };
+
     const addOutcomeCondition = () => setOutcomeDraft(prev => ({ ...prev, conditions: [...prev.conditions, { field_key: '', value: '' }] }));
     const removeOutcomeCondition = (idx) => setOutcomeDraft(prev => ({ ...prev, conditions: prev.conditions.filter((_, i) => i !== idx) }));
     const updateOutcomeCondition = (idx, key, value) => {
@@ -797,8 +833,14 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 <div>
                                                                     <span className="text-sm font-medium text-gray-800">{f.label}</span>
                                                                     <span className="text-xs text-gray-400 ml-2">key: {f.field_key}</span>
-                                                                    {f.field_type === 'number' && (
-                                                                        <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-1.5 py-0.5 ml-2">number</span>
+                                                                    {f.field_type !== 'dropdown' && (
+                                                                        <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-1.5 py-0.5 ml-2">{f.field_type}</span>
+                                                                    )}
+                                                                    {f.required === false && (
+                                                                        <span className="text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5 ml-2">optional</span>
+                                                                    )}
+                                                                    {f.section && (
+                                                                        <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded px-1.5 py-0.5 ml-2">{f.section}</span>
                                                                     )}
                                                                 </div>
                                                                 <button type="button" onClick={() => handleDeleteField(f.id)} className="text-gray-400 hover:text-red-500">
@@ -807,6 +849,10 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                             </div>
                                                             {f.field_type === 'number' ? (
                                                                 <p className="text-xs text-gray-500 mt-2">Free-entry number -- the customer types their own value.</p>
+                                                            ) : f.field_type === 'toggle' ? (
+                                                                <p className="text-xs text-gray-500 mt-2">Yes/No switch.</p>
+                                                            ) : f.field_type === 'date' ? (
+                                                                <p className="text-xs text-gray-500 mt-2">Customer picks a date.</p>
                                                             ) : (
                                                                 <div className="flex flex-wrap gap-1 mt-2">
                                                                     {(f.options || []).map((o, i) => (
@@ -832,7 +878,7 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 </div>
                                                             )}
 
-                                                            {fieldIdx > 0 && f.field_type !== 'number' && (
+                                                            {fieldIdx > 0 && f.field_type === 'dropdown' && (
                                                                 <div className="mt-3 border-t border-gray-200 pt-2">
                                                                     <p className="text-xs text-gray-500 mb-1">Narrow this field's options based on an earlier answer (optional)</p>
                                                                     {getRuleDraft(f.id).conditions.map((c, cIdx) => (
@@ -886,6 +932,86 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                     </button>
                                                                 </div>
                                                             )}
+
+                                                            {(f.visibility_rules || []).length > 0 && (
+                                                                <div className="mt-3 space-y-1">
+                                                                    {f.visibility_rules.map(r => (
+                                                                        <div key={r.id} className="flex items-center justify-between text-xs bg-white border border-gray-200 rounded px-2 py-1">
+                                                                            <span>
+                                                                                Shown only IF {r.conditions.map(c => `${c.field_key}=${c.value}`).join(' AND ')}
+                                                                            </span>
+                                                                            <button type="button" onClick={() => handleDeleteVisibilityRule(r.id)} className="text-gray-400 hover:text-red-500 ml-2">
+                                                                                <window.Icons.X />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {fieldIdx > 0 && (
+                                                                <div className="mt-3 border-t border-gray-200 pt-2">
+                                                                    <p className="text-xs text-gray-500 mb-1">Show this field only when... (optional -- leave unset to always show it)</p>
+                                                                    {getVisibilityDraft(f.id).conditions.map((c, cIdx) => (
+                                                                        <div key={cIdx} className="flex gap-2 items-center mb-1">
+                                                                            <select
+                                                                                value={c.field_key}
+                                                                                onChange={(e) => updateVisibilityConditionRow(f.id, cIdx, 'field_key', e.target.value)}
+                                                                                className={`${inputCls} text-xs py-1`}
+                                                                            >
+                                                                                <option value="">If field...</option>
+                                                                                {prequoteFields.slice(0, fieldIdx).map(pf => (
+                                                                                    <option key={pf.field_key} value={pf.field_key}>{pf.label}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                            <span className="text-xs text-gray-400">=</span>
+                                                                            {(() => {
+                                                                                const condField = prequoteFields.find(pf => pf.field_key === c.field_key);
+                                                                                return condField && condField.field_type === 'toggle' ? (
+                                                                                    <select
+                                                                                        value={c.value}
+                                                                                        onChange={(e) => updateVisibilityConditionRow(f.id, cIdx, 'value', e.target.value)}
+                                                                                        className={`${inputCls} text-xs py-1`}
+                                                                                    >
+                                                                                        <option value="">value...</option>
+                                                                                        <option value="yes">Yes</option>
+                                                                                        <option value="no">No</option>
+                                                                                    </select>
+                                                                                ) : condField && condField.field_type === 'dropdown' ? (
+                                                                                    <select
+                                                                                        value={c.value}
+                                                                                        onChange={(e) => updateVisibilityConditionRow(f.id, cIdx, 'value', e.target.value)}
+                                                                                        className={`${inputCls} text-xs py-1`}
+                                                                                    >
+                                                                                        <option value="">value...</option>
+                                                                                        {(condField.options || []).map(o => (
+                                                                                            <option key={o.value} value={o.value}>{o.label}</option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                ) : (
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={c.value}
+                                                                                        onChange={(e) => updateVisibilityConditionRow(f.id, cIdx, 'value', e.target.value)}
+                                                                                        className={`${inputCls} text-xs py-1`}
+                                                                                        placeholder="value..."
+                                                                                    />
+                                                                                );
+                                                                            })()}
+                                                                            {getVisibilityDraft(f.id).conditions.length > 1 && (
+                                                                                <button type="button" onClick={() => removeVisibilityConditionRow(f.id, cIdx)} className="text-gray-400 hover:text-red-500">
+                                                                                    <window.Icons.X />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                    <button type="button" onClick={() => addVisibilityConditionRow(f.id)} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                                        + Add condition
+                                                                    </button>
+                                                                    <button type="button" onClick={() => handleAddVisibilityRule(f)} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 block mt-2">
+                                                                        Add visibility rule
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -924,6 +1050,39 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                             />
                                                             Number (customer types a value, e.g. car value)
                                                         </label>
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                checked={newField.field_type === 'toggle'}
+                                                                onChange={() => setNewField(prev => ({ ...prev, field_type: 'toggle' }))}
+                                                            />
+                                                            Toggle (Yes/No)
+                                                        </label>
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                checked={newField.field_type === 'date'}
+                                                                onChange={() => setNewField(prev => ({ ...prev, field_type: 'date' }))}
+                                                            />
+                                                            Date
+                                                        </label>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 mb-3">
+                                                        <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={newField.required}
+                                                                onChange={(e) => setNewField(prev => ({ ...prev, required: e.target.checked }))}
+                                                            />
+                                                            Required -- customer must answer before a result can be shown
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={newField.section}
+                                                            onChange={(e) => setNewField(prev => ({ ...prev, section: e.target.value }))}
+                                                            className={`${inputCls} text-xs py-1 w-56 flex-shrink-0`}
+                                                            placeholder="Section (optional), e.g. Personal Details"
+                                                        />
                                                     </div>
                                                     {newField.field_type === 'dropdown' ? (
                                                         <>
@@ -965,9 +1124,17 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                                                 + Add option
                                                             </button>
                                                         </>
-                                                    ) : (
+                                                    ) : newField.field_type === 'number' ? (
                                                         <p className="text-xs text-gray-500 mb-3">
                                                             No options needed -- the customer types a number directly (e.g. 325000). Reference this field's key as the base value in a Result Rule below.
+                                                        </p>
+                                                    ) : newField.field_type === 'toggle' ? (
+                                                        <p className="text-xs text-gray-500 mb-3">
+                                                            A Yes/No switch -- no options needed.
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-500 mb-3">
+                                                            Customer picks a date -- no options needed.
                                                         </p>
                                                     )}
                                                     <button type="button" onClick={handleAddField} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
