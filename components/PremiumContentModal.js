@@ -73,6 +73,8 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
         video_category: (content?.content_type === 'video' && templateData?.category) || '',
         // pdf
         pdf_url: (content?.content_type === 'pdf' && content?.content_url) || '',
+        // web_app
+        web_app_url: (content?.content_type === 'web_app' && content?.content_url) || '',
     });
 
     const [seriesVideos, setSeriesVideos] = useState(
@@ -213,6 +215,8 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
             template_data = seriesVideos.filter(v => v.title || v.videoUrl);
         } else if (formData.content_type === 'pdf') {
             content_url = formData.pdf_url;
+        } else if (formData.content_type === 'web_app') {
+            content_url = formData.web_app_url;
         } else if (formData.content_type === 'budget') {
             content_url = content_url || 'budget-template';
             template_data = {
@@ -451,6 +455,20 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                             <input type="url" value={formData.pdf_url}
                                 onChange={(e) => handleChange('pdf_url', e.target.value)}
                                 className={inputCls} required placeholder="https://.../guide.pdf" />
+                        </div>
+                    )}
+
+                    {formData.content_type === 'web_app' && (
+                        <div className="border-t pt-4">
+                            <label className={labelCls}>Hosted Tool URL *</label>
+                            <input type="url" value={formData.web_app_url}
+                                onChange={(e) => handleChange('web_app_url', e.target.value)}
+                                className={inputCls} required placeholder="https://flexiwallets.com/tools/..." />
+                            <p className="text-xs text-gray-400 mt-1">
+                                The live page a buyer opens after verifying their phone number
+                                there -- access control happens on that page itself
+                                (phone + one-time code), not inside this app.
+                            </p>
                         </div>
                     )}
 

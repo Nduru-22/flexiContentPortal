@@ -49,7 +49,14 @@ window.PREMIUM_CONTENT_TYPES = [
     { value: 'video', label: 'Single Video', icon: '🎥' },
     { value: 'series', label: 'Video Series', icon: '🎬' },
     { value: 'pdf', label: 'Document (PDF)', icon: '📄' },
-    { value: 'budget', label: 'Budget Template', icon: '💰' }
+    { value: 'budget', label: 'Budget Template', icon: '💰' },
+    // Hosted outside the app (e.g. a cPanel page) -- a calculator, an
+    // interactive workbook, anything meant to be used online rather than
+    // downloaded or watched. Access is phone number + OTP on that page
+    // itself (check-content-access/otp in zeegoBackend), not anything
+    // this app's own purchase-gating needs to handle beyond storing the
+    // URL, same as 'pdf' does.
+    { value: 'web_app', label: 'Interactive Web Tool', icon: '🧮' }
 ];
 
 // Suppliers on a budget template's items/sub-items become real Billers on
