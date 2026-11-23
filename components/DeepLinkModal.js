@@ -89,6 +89,16 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
     const [previewText, setPreviewText] = useState('');
     const [callToAction, setCallToAction] = useState('');
 
+    // Digital activity attachment -- only meaningful for goal/wallet/budget
+    // templates, since those are the only types that stamp source_template_id
+    // onto the entity they create (see zeegoBackend's wallet/budget creation
+    // routes). get_activity_status looks this template up by that id, then
+    // reads activity_content_id back out of template_data below -- a
+    // premium_content row flagged is_activity, reusable across many templates.
+    const [activityOptions, setActivityOptions] = useState([]);
+    const [activityContentId, setActivityContentId] = useState('');
+    const ACTIVITY_TEMPLATE_TYPES = ['goal', 'wallet', 'budget'];
+
     const typeInfo = window.DEEPLINK_TYPES.find(t => t.value === templateType);
     const isEditing = !!editLink;
 
@@ -102,6 +112,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
             const data = editLink.template_data || {};
             setPreviewText(data.preview_text || '');
             setCallToAction(data.call_to_action || '');
+            setActivityContentId(data.activity_content_id || '');
             if (editLink.template_type === 'nav') {
                 const preset = window.NAV_ROUTES.find(r => r.value === data.route);
                 setNavRoute(preset ? preset.value : '__custom__');
@@ -151,6 +162,18 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
             .finally(() => setPickerLoading(false));
     }, [templateType]);
 
+    // Activity attachment list -- reuses the premium_content admin listing
+    // (already fetches every content item, active or not) rather than a
+    // separate endpoint, filtered down to is_activity rows client-side.
+    // Loaded once the first time a template type that supports it is shown,
+    // not re-fetched on every keystroke/type switch.
+    useEffect(() => {
+        if (!ACTIVITY_TEMPLATE_TYPES.includes(templateType) || activityOptions.length) return;
+        window.deeplinksAPI.options.premium_content()
+            .then(items => setActivityOptions(items.filter(i => i.is_activity)))
+            .catch(() => setActivityOptions([]));
+    }, [templateType]);
+
     const resetForm = () => {
         setTemplateType('content');
         setTemplateId(generateTemplateId('content'));
@@ -169,6 +192,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
         setWalletItems([emptyWalletItem()]);
         setPreviewText('');
         setCallToAction('');
+        setActivityContentId('');
         setError('');
     };
 
@@ -333,6 +357,9 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
 
         if (previewText.trim()) templateData.preview_text = previewText.trim();
         if (callToAction.trim()) templateData.call_to_action = callToAction.trim();
+        if (ACTIVITY_TEMPLATE_TYPES.includes(templateType) && activityContentId) {
+            templateData.activity_content_id = activityContentId;
+        }
 
         const finalTemplateId = templateId.trim();
 
@@ -719,6 +746,32 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Digital activity attachment */}
+                    {ACTIVITY_TEMPLATE_TYPES.includes(templateType) && (
+                        <div className="mb-6 border-t pt-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Attach a Digital Activity <span className="text-xs text-gray-400">(optional)</span>
+                            </label>
+                            <select
+                                value={activityContentId}
+                                onChange={(e) => setActivityContentId(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            >
+                                <option value="">None</option>
+                                {activityOptions.map(a => (
+                                    <option key={a.content_id} value={a.content_id}>
+                                        {a.title} ({a.content_id}){a.juno_shareable ? ' — Juno open-link' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                A coloring page, tree, jar, etc. the scanner's goal/wallet/budget screen
+                                shows a button for -- reuse the same activity across as many templates
+                                as you like. Create it first from Premium Content, flagged "Template Activity".
+                            </p>
                         </div>
                     )}
 

@@ -67,6 +67,8 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
         duration: content?.duration || '',
         requires_purchase: content?.requires_purchase ?? true,
         juno_eligible: content?.juno_eligible ?? true,
+        is_activity: content?.is_activity ?? false,
+        juno_shareable: content?.juno_shareable ?? false,
         influencer_id: content?.influencer_id || '',
         // video
         content_url: content?.content_url || '',
@@ -261,6 +263,8 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
             price: formData.price === '' ? 0 : parseFloat(formData.price),
             requires_purchase: formData.requires_purchase,
             juno_eligible: formData.juno_eligible,
+            is_activity: formData.is_activity,
+            juno_shareable: formData.is_activity && formData.juno_shareable,
             influencer_id: formData.influencer_id || null,
             template_data
         };
@@ -586,6 +590,35 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                                 Lets a parent gift this to their own Juno at purchase time.
                             </p>
                         </div>
+                        <div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={formData.is_activity}
+                                    onChange={(e) => handleChange('is_activity', e.target.checked)}
+                                    className="w-4 h-4 text-purple-600 rounded" />
+                                <span className="text-sm font-medium text-gray-700">Template Activity</span>
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1 ml-6">
+                                An interactive page (coloring, a tree, a jar) attached to a deep-link
+                                template rather than browsed/bought directly -- hidden from the
+                                Premium Content list on the app.
+                            </p>
+                        </div>
+                        {formData.is_activity && (
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.juno_shareable}
+                                        onChange={(e) => handleChange('juno_shareable', e.target.checked)}
+                                        className="w-4 h-4 text-purple-600 rounded" />
+                                    <span className="text-sm font-medium text-gray-700">Open Link for Juno</span>
+                                </label>
+                                <p className="text-xs text-gray-500 mt-1 ml-6">
+                                    Juno has no phone of their own, so this activity opens via a
+                                    plain shareable link (any device, no OTP) instead of the
+                                    phone-locked in-app flow. Only use this for activities that
+                                    don't expose a real balance.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div>
