@@ -55,13 +55,14 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
         // has a payout destination with no extra sign-up step.
         signup_form_url: challenge?.signup_form_url || '',
         signup_form_label: challenge?.signup_form_label || '',
-        // Which existing 'goal'-type deep-link template (with a digital
-        // activity already attached via the Deep Links tab) backs this
-        // challenge -- join_challenge() stamps it onto each participant's
-        // own goal wallet as source_template_id, so the activity attaches
-        // per-person, not to this shared challenge record. Only 'goal'
-        // templates qualify -- that's the one type whose source_template_id
-        // convention join_challenge()'s own wallet creation reuses.
+        // The backing 'goal'-type DeepLinkTemplate id for this challenge's
+        // digital product, if any -- join_challenge() stamps it onto each
+        // participant's own goal wallet as source_template_id, so the
+        // activity attaches per-person, not to this shared challenge
+        // record. Not editable directly: the picker below works off
+        // activityContentId and handleSubmit derives/recreates this value.
+        // Kept here only so the mount effect can reverse-resolve an
+        // existing challenge's activity back to its content_id.
         activity_template_id: challenge?.activity_template_id || ''
     });
     const [payoutEnabled, setPayoutEnabled] = useState(hasPayout);
@@ -69,32 +70,37 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    // Goal-type deep-link templates that already have a digital activity
-    // attached (template_data.activity_content_id set) -- the only ones
-    // valid to pick here. Cross-referenced against the premium_content
-    // listing just to show a human-readable activity name/title instead
-    // of a bare content_id.
-    const [activityTemplates, setActivityTemplates] = useState([]);
-    const [activityTemplatesLoading, setActivityTemplatesLoading] = useState(true);
+    // Digital products (premium content: coloring book/tree/jar etc.) --
+    // picked directly here, no detour through the Deep Links tab. Backend
+    // wiring (join_challenge() -> source_template_id -> DeepLinkTemplate
+    // lookup, see userdb.py) still needs a 'goal'-type DeepLinkTemplate row
+    // to point at, so handleSubmit auto-creates/reuses one behind the
+    // scenes, keyed off the content_id -- the admin never sees it. On edit,
+    // reverse-resolve the challenge's existing activity_template_id back to
+    // its content_id so the picker shows the right thing pre-selected.
+    const [digitalProducts, setDigitalProducts] = useState([]);
+    const [digitalProductsLoading, setDigitalProductsLoading] = useState(true);
+    const [activityContentId, setActivityContentId] = useState('');
 
     useEffect(() => {
         Promise.all([
-            window.deeplinksAPI.getAll('goal'),
-            window.deeplinksAPI.options.premium_content()
-        ]).then(([templatesResult, contentItems]) => {
-            const templates = (templatesResult?.detail || templatesResult || []);
-            const contentById = {};
-            (contentItems || []).forEach(c => { contentById[c.content_id] = c; });
-            const withActivity = (Array.isArray(templates) ? templates : [])
-                .filter(t => t.template_data?.activity_content_id)
-                .map(t => ({
-                    template_id: t.template_id,
-                    activity_content_id: t.template_data.activity_content_id,
-                    activity_title: contentById[t.template_data.activity_content_id]?.title || t.template_data.activity_content_id
-                }));
-            setActivityTemplates(withActivity);
-        }).catch(() => setActivityTemplates([]))
-          .finally(() => setActivityTemplatesLoading(false));
+            window.deeplinksAPI.options.premium_content(),
+            formData.activity_template_id ? window.deeplinksAPI.getAll('goal') : Promise.resolve(null)
+        ]).then(([contentItems, templatesResult]) => {
+            // Same is_activity filter DeepLinkModal.js already uses -- a
+            // premium_content row flagged as a usable activity (coloring
+            // book/tree/jar), not every video/PDF/series in the catalog.
+            setDigitalProducts((contentItems || []).filter(c => c.is_activity));
+            if (formData.activity_template_id && templatesResult) {
+                const templates = (templatesResult?.detail || templatesResult || []);
+                const match = (Array.isArray(templates) ? templates : [])
+                    .find(t => t.template_id === formData.activity_template_id);
+                if (match?.template_data?.activity_content_id) {
+                    setActivityContentId(match.template_data.activity_content_id);
+                }
+            }
+        }).catch(() => setDigitalProducts([]))
+          .finally(() => setDigitalProductsLoading(false));
     }, []);
 
     const handleChange = (field, value) => {
@@ -139,11 +145,36 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
             payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null,
             signup_form_url: payoutEnabled ? (formData.signup_form_url.trim() || null) : null,
             signup_form_label: payoutEnabled ? (formData.signup_form_label.trim() || null) : null,
-            activity_template_id: formData.activity_template_id || null
+            activity_template_id: null
         };
 
         setSaving(true);
         try {
+            // join_challenge() needs an existing 'goal'-type DeepLinkTemplate
+            // row to pass as source_template_id -- it only ever reads
+            // template_data.activity_content_id back out of it (see
+            // userdb.py's _activity_entity_snapshot), so a minimal template
+            // keyed deterministically off the content_id is enough. create()
+            // upserts on template_id, so re-saving this same digital product
+            // on another challenge reuses the same row instead of piling up
+            // duplicates.
+            if (activityContentId) {
+                const autoTemplateId = `challenge-activity-${activityContentId}`;
+                try {
+                    await window.deeplinksAPI.create({
+                        template_id: autoTemplateId,
+                        template_type: 'goal',
+                        template_data: { activity_content_id: activityContentId },
+                        is_active: true
+                    });
+                    payload.activity_template_id = autoTemplateId;
+                } catch (linkErr) {
+                    setError('Failed to link digital product: ' + (linkErr.message || 'unknown error'));
+                    setSaving(false);
+                    return;
+                }
+            }
+
             let result;
             if (isEdit) {
                 payload.is_active = formData.is_active;
@@ -354,28 +385,28 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
 
                     {/* Digital activity */}
                     <div className="border-t pt-5">
-                        <h4 className="font-semibold text-gray-800 mb-1">Digital activity</h4>
+                        <h4 className="font-semibold text-gray-800 mb-1">Digital product</h4>
                         <p className="text-xs text-gray-500 mb-3">
-                            Gives every participant their own copy of a coloring book / tree / jar that fills in as they save toward this challenge — each person only ever sees their own progress, never anyone else's. Create the template first on the Deep Links tab (type: Goal Template, with an activity attached), then pick it here.
+                            Gives every participant their own copy of a coloring book / tree / jar that fills in as they save toward this challenge — each person only ever sees their own progress, never anyone else's. Pick an existing digital product directly, no separate setup needed.
                         </p>
                         <select
-                            value={formData.activity_template_id}
-                            onChange={(e) => handleChange('activity_template_id', e.target.value)}
+                            value={activityContentId}
+                            onChange={(e) => setActivityContentId(e.target.value)}
                             className={inputCls}
-                            disabled={activityTemplatesLoading}
+                            disabled={digitalProductsLoading}
                         >
                             <option value="">
-                                {activityTemplatesLoading ? 'Loading...' : 'None'}
+                                {digitalProductsLoading ? 'Loading...' : 'None'}
                             </option>
-                            {activityTemplates.map(t => (
-                                <option key={t.template_id} value={t.template_id}>
-                                    {t.activity_title} — {t.template_id}
+                            {digitalProducts.map(c => (
+                                <option key={c.content_id} value={c.content_id}>
+                                    {c.title}
                                 </option>
                             ))}
                         </select>
-                        {!activityTemplatesLoading && activityTemplates.length === 0 && (
+                        {!digitalProductsLoading && digitalProducts.length === 0 && (
                             <p className="text-xs text-amber-600 mt-1">
-                                No Goal Templates with a digital activity attached yet — add one on the Deep Links tab first.
+                                No digital products yet — add one on the Premium Content tab first.
                             </p>
                         )}
                     </div>
