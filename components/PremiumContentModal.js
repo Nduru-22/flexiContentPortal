@@ -384,10 +384,12 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                                 className={inputCls} />
                         </div>
                         <div>
-                            <label className={labelCls}>Thumbnail URL</label>
-                            <input type="url" value={formData.thumbnail_url}
-                                onChange={(e) => handleChange('thumbnail_url', e.target.value)}
-                                className={inputCls} placeholder="https://..." />
+                            <window.FileUploadField
+                                label="Thumbnail"
+                                value={formData.thumbnail_url}
+                                onChange={(url) => handleChange('thumbnail_url', url)}
+                                category="image"
+                            />
                         </div>
                     </div>
 
@@ -445,9 +447,12 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                                     <input placeholder="Description" value={v.description}
                                         onChange={(e) => updateVideo(idx, 'description', e.target.value)}
                                         className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded" />
-                                    <input placeholder="Thumbnail URL" value={v.thumbnail}
-                                        onChange={(e) => updateVideo(idx, 'thumbnail', e.target.value)}
-                                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded" />
+                                    <window.FileUploadField
+                                        value={v.thumbnail}
+                                        onChange={(url) => updateVideo(idx, 'thumbnail', url)}
+                                        category="image"
+                                        placeholder="Thumbnail URL"
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -455,10 +460,13 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
 
                     {formData.content_type === 'pdf' && (
                         <div className="border-t pt-4">
-                            <label className={labelCls}>Document URL (PDF) *</label>
-                            <input type="url" value={formData.pdf_url}
-                                onChange={(e) => handleChange('pdf_url', e.target.value)}
-                                className={inputCls} required placeholder="https://.../guide.pdf" />
+                            <window.FileUploadField
+                                label="Document (PDF)"
+                                value={formData.pdf_url}
+                                onChange={(url) => handleChange('pdf_url', url)}
+                                category="document"
+                                required
+                            />
                         </div>
                     )}
 

@@ -133,13 +133,11 @@ window.CatalogPartnerModal = function CatalogPartnerModal({ partner, onClose, on
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                            <input
-                                type="url"
+                            <window.FileUploadField
+                                label="Logo"
                                 value={formData.logo_url}
-                                onChange={(e) => handleChange('logo_url', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                placeholder="https://example.com/logo.png"
+                                onChange={(url) => handleChange('logo_url', url)}
+                                category="image"
                             />
                         </div>
 

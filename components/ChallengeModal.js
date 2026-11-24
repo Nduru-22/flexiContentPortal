@@ -271,10 +271,12 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
                         <h4 className="font-semibold text-gray-800 mb-3">Challenge visual</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className={labelCls}>Hero Image URL</label>
-                                <input type="url" value={formData.hero_image_url}
-                                    onChange={(e) => handleChange('hero_image_url', e.target.value)}
-                                    className={inputCls} placeholder="https://example.com/challenge-banner.jpg" />
+                                <window.FileUploadField
+                                    label="Hero Image"
+                                    value={formData.hero_image_url}
+                                    onChange={(url) => handleChange('hero_image_url', url)}
+                                    category="image"
+                                />
                             </div>
                             <div className="md:col-span-2">
                                 <label className={labelCls}>Influencer / Host</label>

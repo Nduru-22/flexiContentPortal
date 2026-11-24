@@ -135,13 +135,11 @@ window.CatalogBannerModal = function CatalogBannerModal({ banner, onClose, onSav
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className={labelCls}>Image URL</label>
-                            <input
-                                type="url"
+                            <window.FileUploadField
+                                label="Image"
                                 value={formData.image_url}
-                                onChange={(e) => handleChange('image_url', e.target.value)}
-                                className={inputCls}
-                                placeholder="https://example.com/banner.jpg"
+                                onChange={(url) => handleChange('image_url', url)}
+                                category="image"
                             />
                         </div>
 

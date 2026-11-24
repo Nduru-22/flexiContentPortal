@@ -289,15 +289,11 @@ function ContentModal({ isOpen, onClose, onSave, editContent = null }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Thumbnail URL
-                                    </label>
-                                    <input
-                                        type="url"
+                                    <window.FileUploadField
+                                        label="Thumbnail"
                                         value={thumbnail}
-                                        onChange={(e) => setThumbnail(e.target.value)}
-                                        placeholder="https://..."
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        onChange={setThumbnail}
+                                        category="image"
                                     />
                                 </div>
                             </div>

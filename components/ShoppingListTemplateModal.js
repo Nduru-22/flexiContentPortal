@@ -202,13 +202,11 @@ window.ShoppingListTemplateModal = function ShoppingListTemplateModal({ template
                         </div>
 
                         <div>
-                            <label className={labelCls}>Cover image URL</label>
-                            <input
-                                type="url"
+                            <window.FileUploadField
+                                label="Cover Image"
                                 value={formData.cover_image_url}
-                                onChange={(e) => handleChange('cover_image_url', e.target.value)}
-                                className={inputCls}
-                                placeholder="https://..."
+                                onChange={(url) => handleChange('cover_image_url', url)}
+                                category="image"
                             />
                         </div>
 

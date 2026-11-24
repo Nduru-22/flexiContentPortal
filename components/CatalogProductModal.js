@@ -1646,14 +1646,15 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="url"
-                                        value={newImageUrl}
-                                        onChange={(e) => setNewImageUrl(e.target.value)}
-                                        className={inputCls}
-                                        placeholder="https://example.com/hero.jpg"
-                                    />
+                                <div className="flex gap-2 items-start">
+                                    <div className="flex-1">
+                                        <window.FileUploadField
+                                            value={newImageUrl}
+                                            onChange={setNewImageUrl}
+                                            category="image"
+                                            placeholder="https://example.com/hero.jpg"
+                                        />
+                                    </div>
                                     <button type="button" onClick={handleAddImage} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm whitespace-nowrap">
                                         Add
                                     </button>
@@ -1681,13 +1682,14 @@ window.CatalogProductModal = function CatalogProductModal({ product, partners, o
                                         className={`${inputCls} md:col-span-1`}
                                         placeholder="Label, e.g. Policy brochure"
                                     />
-                                    <input
-                                        type="url"
-                                        value={newDoc.file_url}
-                                        onChange={(e) => setNewDoc(prev => ({ ...prev, file_url: e.target.value }))}
-                                        className={`${inputCls} md:col-span-2`}
-                                        placeholder="https://example.com/brochure.pdf"
-                                    />
+                                    <div className="md:col-span-2">
+                                        <window.FileUploadField
+                                            value={newDoc.file_url}
+                                            onChange={(url) => setNewDoc(prev => ({ ...prev, file_url: url }))}
+                                            category="document"
+                                            placeholder="https://example.com/brochure.pdf"
+                                        />
+                                    </div>
                                     <select
                                         value={newDoc.type}
                                         onChange={(e) => setNewDoc(prev => ({ ...prev, type: e.target.value }))}

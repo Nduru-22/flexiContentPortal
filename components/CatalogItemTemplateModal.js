@@ -173,27 +173,13 @@ window.CatalogItemTemplateModal = function CatalogItemTemplateModal({ item, onCl
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className={labelCls}>
-                                Image URL <span className="text-xs text-gray-400">(falls back to a category icon if left blank or the link breaks)</span>
-                            </label>
-                            <div className="flex gap-3 items-start">
-                                <input
-                                    type="url"
-                                    value={formData.image_url}
-                                    onChange={(e) => handleChange('image_url', e.target.value)}
-                                    className={inputCls}
-                                    placeholder="https://..."
-                                />
-                                {formData.image_url && (
-                                    <img
-                                        src={formData.image_url}
-                                        alt=""
-                                        className="h-16 w-16 object-contain border border-gray-200 rounded-lg flex-shrink-0 bg-gray-50"
-                                        onError={(e) => { e.target.style.visibility = 'hidden'; }}
-                                        onLoad={(e) => { e.target.style.visibility = 'visible'; }}
-                                    />
-                                )}
-                            </div>
+                            <window.FileUploadField
+                                label="Image"
+                                value={formData.image_url}
+                                onChange={(url) => handleChange('image_url', url)}
+                                category="image"
+                                placeholder="Falls back to a category icon if left blank"
+                            />
                         </div>
 
                         {isEdit && (

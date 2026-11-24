@@ -180,17 +180,13 @@ window.ProductModal = function ProductModal({ product, onClose, onSave }) {
                             />
                         </div>
 
-                        {/* Image URL */}
+                        {/* Image */}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Image URL
-                            </label>
-                            <input
-                                type="url"
+                            <window.FileUploadField
+                                label="Image"
                                 value={formData.image_link}
-                                onChange={(e) => handleChange('image_link', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                                placeholder="https://example.com/image.jpg"
+                                onChange={(url) => handleChange('image_link', url)}
+                                category="image"
                             />
                         </div>
 
