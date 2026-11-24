@@ -3,7 +3,7 @@
 // for the challenge card/detail page, who it's run with (influencer name),
 // and an optional payout destination for when the challenge is backed by
 // an investment company.
-const { useState } = React;
+const { useState, useEffect } = React;
 
 function generateChallengeId(name) {
     const slug = (name || 'challenge')
@@ -54,12 +54,48 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
         // e.g. a SACCO membership form. Left blank, the challenge just
         // has a payout destination with no extra sign-up step.
         signup_form_url: challenge?.signup_form_url || '',
-        signup_form_label: challenge?.signup_form_label || ''
+        signup_form_label: challenge?.signup_form_label || '',
+        // Which existing 'goal'-type deep-link template (with a digital
+        // activity already attached via the Deep Links tab) backs this
+        // challenge -- join_challenge() stamps it onto each participant's
+        // own goal wallet as source_template_id, so the activity attaches
+        // per-person, not to this shared challenge record. Only 'goal'
+        // templates qualify -- that's the one type whose source_template_id
+        // convention join_challenge()'s own wallet creation reuses.
+        activity_template_id: challenge?.activity_template_id || ''
     });
     const [payoutEnabled, setPayoutEnabled] = useState(hasPayout);
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    // Goal-type deep-link templates that already have a digital activity
+    // attached (template_data.activity_content_id set) -- the only ones
+    // valid to pick here. Cross-referenced against the premium_content
+    // listing just to show a human-readable activity name/title instead
+    // of a bare content_id.
+    const [activityTemplates, setActivityTemplates] = useState([]);
+    const [activityTemplatesLoading, setActivityTemplatesLoading] = useState(true);
+
+    useEffect(() => {
+        Promise.all([
+            window.deeplinksAPI.getAll('goal'),
+            window.deeplinksAPI.options.premium_content()
+        ]).then(([templatesResult, contentItems]) => {
+            const templates = (templatesResult?.detail || templatesResult || []);
+            const contentById = {};
+            (contentItems || []).forEach(c => { contentById[c.content_id] = c; });
+            const withActivity = (Array.isArray(templates) ? templates : [])
+                .filter(t => t.template_data?.activity_content_id)
+                .map(t => ({
+                    template_id: t.template_id,
+                    activity_content_id: t.template_data.activity_content_id,
+                    activity_title: contentById[t.template_data.activity_content_id]?.title || t.template_data.activity_content_id
+                }));
+            setActivityTemplates(withActivity);
+        }).catch(() => setActivityTemplates([]))
+          .finally(() => setActivityTemplatesLoading(false));
+    }, []);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -102,7 +138,8 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
             payout_payment_method: payoutEnabled ? formData.payout_payment_method : null,
             payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null,
             signup_form_url: payoutEnabled ? (formData.signup_form_url.trim() || null) : null,
-            signup_form_label: payoutEnabled ? (formData.signup_form_label.trim() || null) : null
+            signup_form_label: payoutEnabled ? (formData.signup_form_label.trim() || null) : null,
+            activity_template_id: formData.activity_template_id || null
         };
 
         setSaving(true);
@@ -310,6 +347,34 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
                             </div>
                         ) : (
                             <p className="text-sm text-gray-500 italic">Left open — this challenge stays internal, no payout destination configured.</p>
+                        )}
+                    </div>
+
+                    {/* Digital activity */}
+                    <div className="border-t pt-5">
+                        <h4 className="font-semibold text-gray-800 mb-1">Digital activity</h4>
+                        <p className="text-xs text-gray-500 mb-3">
+                            Gives every participant their own copy of a coloring book / tree / jar that fills in as they save toward this challenge — each person only ever sees their own progress, never anyone else's. Create the template first on the Deep Links tab (type: Goal Template, with an activity attached), then pick it here.
+                        </p>
+                        <select
+                            value={formData.activity_template_id}
+                            onChange={(e) => handleChange('activity_template_id', e.target.value)}
+                            className={inputCls}
+                            disabled={activityTemplatesLoading}
+                        >
+                            <option value="">
+                                {activityTemplatesLoading ? 'Loading...' : 'None'}
+                            </option>
+                            {activityTemplates.map(t => (
+                                <option key={t.template_id} value={t.template_id}>
+                                    {t.activity_title} — {t.template_id}
+                                </option>
+                            ))}
+                        </select>
+                        {!activityTemplatesLoading && activityTemplates.length === 0 && (
+                            <p className="text-xs text-amber-600 mt-1">
+                                No Goal Templates with a digital activity attached yet — add one on the Deep Links tab first.
+                            </p>
                         )}
                     </div>
 
