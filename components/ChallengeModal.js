@@ -54,16 +54,7 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
         // e.g. a SACCO membership form. Left blank, the challenge just
         // has a payout destination with no extra sign-up step.
         signup_form_url: challenge?.signup_form_url || '',
-        signup_form_label: challenge?.signup_form_label || '',
-        // The backing 'goal'-type DeepLinkTemplate id for this challenge's
-        // digital product, if any -- join_challenge() stamps it onto each
-        // participant's own goal wallet as source_template_id, so the
-        // activity attaches per-person, not to this shared challenge
-        // record. Not editable directly: the picker below works off
-        // activityContentId and handleSubmit derives/recreates this value.
-        // Kept here only so the mount effect can reverse-resolve an
-        // existing challenge's activity back to its content_id.
-        activity_template_id: challenge?.activity_template_id || ''
+        signup_form_label: challenge?.signup_form_label || ''
     });
     const [payoutEnabled, setPayoutEnabled] = useState(hasPayout);
 
@@ -71,36 +62,21 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
     const [error, setError] = useState('');
 
     // Digital products (premium content: coloring book/tree/jar etc.) --
-    // picked directly here, no detour through the Deep Links tab. Backend
-    // wiring (join_challenge() -> source_template_id -> DeepLinkTemplate
-    // lookup, see userdb.py) still needs a 'goal'-type DeepLinkTemplate row
-    // to point at, so handleSubmit auto-creates/reuses one behind the
-    // scenes, keyed off the content_id -- the admin never sees it. On edit,
-    // reverse-resolve the challenge's existing activity_template_id back to
-    // its content_id so the picker shows the right thing pre-selected.
+    // stored directly on the challenge as activity_content_id, no
+    // deeplink_templates row involved at all. join_challenge() copies it
+    // straight onto each participant's own goal wallet.
     const [digitalProducts, setDigitalProducts] = useState([]);
     const [digitalProductsLoading, setDigitalProductsLoading] = useState(true);
-    const [activityContentId, setActivityContentId] = useState('');
+    const [activityContentId, setActivityContentId] = useState(challenge?.activity_content_id || '');
 
     useEffect(() => {
-        Promise.all([
-            window.deeplinksAPI.options.premium_content(),
-            formData.activity_template_id ? window.deeplinksAPI.getAll('goal') : Promise.resolve(null)
-        ]).then(([contentItems, templatesResult]) => {
-            // Same is_activity filter DeepLinkModal.js already uses -- a
+        window.deeplinksAPI.options.premium_content()
+            // Same is_activity filter DeepLinkModal.js uses -- a
             // premium_content row flagged as a usable activity (coloring
             // book/tree/jar), not every video/PDF/series in the catalog.
-            setDigitalProducts((contentItems || []).filter(c => c.is_activity));
-            if (formData.activity_template_id && templatesResult) {
-                const templates = (templatesResult?.detail || templatesResult || []);
-                const match = (Array.isArray(templates) ? templates : [])
-                    .find(t => t.template_id === formData.activity_template_id);
-                if (match?.template_data?.activity_content_id) {
-                    setActivityContentId(match.template_data.activity_content_id);
-                }
-            }
-        }).catch(() => setDigitalProducts([]))
-          .finally(() => setDigitalProductsLoading(false));
+            .then(items => setDigitalProducts((items || []).filter(c => c.is_activity)))
+            .catch(() => setDigitalProducts([]))
+            .finally(() => setDigitalProductsLoading(false));
     }, []);
 
     const handleChange = (field, value) => {
@@ -145,36 +121,11 @@ window.ChallengeModal = function ChallengeModal({ challenge, influencers = [], o
             payout_payment_identifier: payoutEnabled ? (formData.payout_payment_identifier.trim() || null) : null,
             signup_form_url: payoutEnabled ? (formData.signup_form_url.trim() || null) : null,
             signup_form_label: payoutEnabled ? (formData.signup_form_label.trim() || null) : null,
-            activity_template_id: null
+            activity_content_id: activityContentId || null
         };
 
         setSaving(true);
         try {
-            // join_challenge() needs an existing 'goal'-type DeepLinkTemplate
-            // row to pass as source_template_id -- it only ever reads
-            // template_data.activity_content_id back out of it (see
-            // userdb.py's _activity_entity_snapshot), so a minimal template
-            // keyed deterministically off the content_id is enough. create()
-            // upserts on template_id, so re-saving this same digital product
-            // on another challenge reuses the same row instead of piling up
-            // duplicates.
-            if (activityContentId) {
-                const autoTemplateId = `challenge-activity-${activityContentId}`;
-                try {
-                    await window.deeplinksAPI.create({
-                        template_id: autoTemplateId,
-                        template_type: 'goal',
-                        template_data: { activity_content_id: activityContentId },
-                        is_active: true
-                    });
-                    payload.activity_template_id = autoTemplateId;
-                } catch (linkErr) {
-                    setError('Failed to link digital product: ' + (linkErr.message || 'unknown error'));
-                    setSaving(false);
-                    return;
-                }
-            }
-
             let result;
             if (isEdit) {
                 payload.is_active = formData.is_active;

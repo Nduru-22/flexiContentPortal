@@ -17,16 +17,7 @@ function DeepLinks() {
         try {
             const response = await window.deeplinksAPI.getAll(filterType !== 'all' ? filterType : null);
             if (response.status === '4000') {
-                // challenge-activity-* rows are auto-created, internal-only
-                // carriers for a challenge's digital product (see
-                // ChallengeModal.js) -- they only exist so join_challenge()
-                // has a DeepLinkTemplate id to read activity_content_id
-                // back out of, and were never given a goal_name/goal_amount
-                // since nothing is supposed to open them as a real goal
-                // template. Showing them here, with a working "Copy" button
-                // for a link that then fails to open ("link looks
-                // incomplete"), is exactly the bug that needs fixing.
-                setLinks((response.detail || []).filter(l => !l.template_id.startsWith('challenge-activity-')));
+                setLinks(response.detail || []);
             } else {
                 console.error('Failed to fetch deep links:', response.message);
             }
