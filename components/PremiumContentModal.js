@@ -69,6 +69,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
         juno_eligible: content?.juno_eligible ?? true,
         is_activity: content?.is_activity ?? false,
         juno_shareable: content?.juno_shareable ?? false,
+        requires_balance: content?.requires_balance ?? true,
         influencer_id: content?.influencer_id || '',
         // video
         content_url: content?.content_url || '',
@@ -265,6 +266,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
             juno_eligible: formData.juno_eligible,
             is_activity: formData.is_activity,
             juno_shareable: formData.is_activity && formData.juno_shareable,
+            requires_balance: formData.is_activity ? formData.requires_balance : true,
             influencer_id: formData.influencer_id || null,
             template_data
         };
@@ -611,6 +613,22 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                                 Premium Content list on the app.
                             </p>
                         </div>
+                        {formData.is_activity && (
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.requires_balance}
+                                        onChange={(e) => handleChange('requires_balance', e.target.checked)}
+                                        className="w-4 h-4 text-purple-600 rounded" />
+                                    <span className="text-sm font-medium text-gray-700">Tied to Balance</span>
+                                </label>
+                                <p className="text-xs text-gray-500 mt-1 ml-6">
+                                    On: this activity tracks the entity's real balance (coloring book,
+                                    tree, jar) and nudges when new progress is available. Off: it's a
+                                    standalone activity with no balance dependency -- just something
+                                    to open, no nudge, no real-value comparison.
+                                </p>
+                            </div>
+                        )}
                         {formData.is_activity && (
                             <div>
                                 <label className="flex items-center gap-2 cursor-pointer">
