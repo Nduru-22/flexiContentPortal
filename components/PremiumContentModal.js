@@ -70,6 +70,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
         is_activity: content?.is_activity ?? false,
         juno_shareable: content?.juno_shareable ?? false,
         requires_balance: content?.requires_balance ?? true,
+        featured: content?.featured ?? false,
         influencer_id: content?.influencer_id || '',
         // video
         content_url: content?.content_url || '',
@@ -126,7 +127,14 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
     }, [formData.content_id, formData.content_type]);
 
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [field]: value,
+            // Featured content is always free -- zero the price the
+            // moment it's checked rather than leaving it as a convention
+            // admins have to remember.
+            ...(field === 'featured' && value ? { price: '' } : {}),
+        }));
     };
 
     // Auto-slug the content_id from the title for new content -- editable
@@ -267,6 +275,7 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
             is_activity: formData.is_activity,
             juno_shareable: formData.is_activity && formData.juno_shareable,
             requires_balance: formData.is_activity ? formData.requires_balance : true,
+            featured: formData.featured,
             influencer_id: formData.influencer_id || null,
             template_data
         };
@@ -598,6 +607,19 @@ window.PremiumContentModal = function PremiumContentModal({ content, influencers
                             </label>
                             <p className="text-xs text-gray-500 mt-1 ml-6">
                                 Lets a parent gift this to their own Juno at purchase time.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={formData.featured}
+                                    onChange={(e) => handleChange('featured', e.target.checked)}
+                                    className="w-4 h-4 text-purple-600 rounded" />
+                                <span className="text-sm font-medium text-gray-700">Featured</span>
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1 ml-6">
+                                Shows in a shuffled list on the app's home screen (a game, a
+                                partner's standalone web app) -- always free; checking this zeroes
+                                the price. Still subject to Juno Eligible like everything else.
                             </p>
                         </div>
                         <div>
