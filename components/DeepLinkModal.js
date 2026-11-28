@@ -88,6 +88,15 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
     // preview_text / call_to_action fields the app already expects)
     const [previewText, setPreviewText] = useState('');
     const [callToAction, setCallToAction] = useState('');
+    // Thumbnail shown as the hero image on the in-app preview modal
+    // (GoalPreviewModal etc., flexiwallets' deeplink_modals.dart). Common
+    // to every type -- goal/wallet/budget have no backing entity to pull
+    // an image from at all, and even the picker-backed types (shop,
+    // premium_content, challenge) never actually carried their selected
+    // entity's image into template_data, so every preview modal rendered
+    // with no thumbnail regardless of type. One explicit field here,
+    // saved as template_data.image_url, fixes it for all of them at once.
+    const [imageUrl, setImageUrl] = useState('');
 
     // Digital activity attachment -- only meaningful for goal/wallet/budget
     // templates, since those are the only types that stamp source_template_id
@@ -112,6 +121,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
             const data = editLink.template_data || {};
             setPreviewText(data.preview_text || '');
             setCallToAction(data.call_to_action || '');
+            setImageUrl(data.image_url || '');
             setActivityContentId(data.activity_content_id || '');
             if (editLink.template_type === 'nav') {
                 const preset = window.NAV_ROUTES.find(r => r.value === data.route);
@@ -192,6 +202,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
         setWalletItems([emptyWalletItem()]);
         setPreviewText('');
         setCallToAction('');
+        setImageUrl('');
         setActivityContentId('');
         setError('');
     };
@@ -202,6 +213,21 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
         if (!isEditing) {
             setTemplateId(generateTemplateId(newType));
         }
+    };
+
+    // Picking an entity for a picker-backed type (shop/premium_content/
+    // challenge/investment/insurance) auto-fills the thumbnail from that
+    // entity's own image, if it has one and the admin hasn't already set
+    // one by hand -- editable afterward like any other field, never
+    // overwrites a value that's already there.
+    const handleTargetChange = (id) => {
+        setTargetId(id);
+        if (isEditing || imageUrl) return;
+        const selected = pickerOptions.find(
+            opt => String(opt[typeInfo.optionIdField]) === String(id)
+        );
+        const picked = selected?.thumbnail_url || selected?.image_url || selected?.img_url;
+        if (picked) setImageUrl(picked);
     };
 
     // ── Budget item / sub-item helpers (same pattern as PremiumContentModal.js) ──
@@ -357,6 +383,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
 
         if (previewText.trim()) templateData.preview_text = previewText.trim();
         if (callToAction.trim()) templateData.call_to_action = callToAction.trim();
+        if (imageUrl.trim()) templateData.image_url = imageUrl.trim();
         if (ACTIVITY_TEMPLATE_TYPES.includes(templateType) && activityContentId) {
             templateData.activity_content_id = activityContentId;
         }
@@ -467,7 +494,7 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                             ) : (
                                 <select
                                     value={targetId}
-                                    onChange={(e) => setTargetId(e.target.value)}
+                                    onChange={(e) => handleTargetChange(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     required
                                 >
@@ -780,6 +807,25 @@ function DeepLinkModal({ isOpen, onClose, onSave, editLink = null }) {
                         <h3 className="text-sm font-semibold text-gray-600">
                             Link Preview <span className="font-normal text-gray-400">(optional)</span>
                         </h3>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Thumbnail / Cover Image URL
+                            </label>
+                            <input
+                                type="text"
+                                value={imageUrl}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                                placeholder="https://..."
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Shown as the hero image on the in-app preview card before the scanner confirms.
+                            </p>
+                            {imageUrl && (
+                                <img src={imageUrl} alt="" className="mt-2 h-24 rounded-lg border border-gray-200 object-cover"
+                                    onError={(e) => { e.target.style.display = 'none'; }} />
+                            )}
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Preview Text
